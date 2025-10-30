@@ -29,7 +29,7 @@ const App: React.FC = () => {
   
   const [gapiReady, setGapiReady] = useState(false);
   const [gisReady, setGisReady] = useState(false);
-  const [isGapiInitialized, setIsGapiInitialized] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
@@ -44,30 +44,26 @@ const App: React.FC = () => {
       setApiConfig(JSON.parse(savedConfig));
     } else {
       setIsSettingsModalOpen(true);
+      setIsInitializing(false);
     }
 
-    // Robust script loading to prevent race conditions
-    const handleGapiLoad = () => {
-      window.gapi.load('client:picker', () => setGapiReady(true));
-    };
-    const handleGisLoad = () => {
-      setGisReady(true);
-    };
+    const handleGapiLoad = () => window.gapi.load('client:picker', () => setGapiReady(true));
+    const handleGisLoad = () => setGisReady(true);
 
     const gapiScript = document.querySelector('script[src="https://apis.google.com/js/api.js"]');
     const gisScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
 
-    // Check if scripts are already loaded
-    if (window.gapi?.client) {
-      handleGapiLoad();
+    // Robustly check if scripts are already loaded or wait for them
+    if (window.gapi && window.gapi.load) {
+        handleGapiLoad();
     } else {
-      gapiScript?.addEventListener('load', handleGapiLoad);
+        gapiScript?.addEventListener('load', handleGapiLoad);
     }
 
-    if (window.google?.accounts) {
-      handleGisLoad();
+    if (window.google && window.google.accounts) {
+        handleGisLoad();
     } else {
-      gisScript?.addEventListener('load', handleGisLoad);
+        gisScript?.addEventListener('load', handleGisLoad);
     }
 
     return () => {
@@ -158,27 +154,34 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (gapiReady && gisReady && apiConfig) {
-      window.tokenClient = window.google.accounts.oauth2.initTokenClient({
-        client_id: apiConfig.clientId,
-        scope: SCOPES,
-        callback: (tokenResponse: any) => {
-          if (tokenResponse.error) {
-            throw tokenResponse.error;
-          }
-          window.gapi.client.setToken(tokenResponse);
-          updateAuthStatus(true);
-        },
-      });
+      try {
+        window.tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: apiConfig.clientId,
+          scope: SCOPES,
+          callback: (tokenResponse: any) => {
+            if (tokenResponse.error) {
+              throw tokenResponse.error;
+            }
+            window.gapi.client.setToken(tokenResponse);
+            updateAuthStatus(true);
+          },
+        });
 
-      window.gapi.client.init({
-        apiKey: apiConfig.apiKey,
-        discoveryDocs: DISCOVERY_DOCS,
-      }).then(() => {
-        setIsGapiInitialized(true);
-      }).catch((err: any) => {
-        console.error("Error initializing gapi client:", err);
-        alert("Error al inicializar el cliente de Google. Revisa tu API Key.");
-      });
+        window.gapi.client.init({
+          apiKey: apiConfig.apiKey,
+          discoveryDocs: DISCOVERY_DOCS,
+        }).then(() => {
+          setIsInitializing(false);
+        }).catch((err: any) => {
+          console.error("Error initializing gapi client:", err);
+          alert("Error al inicializar el cliente de Google. Revisa tu API Key.");
+          setIsInitializing(false);
+        });
+      } catch (error) {
+        console.error("Error setting up Google services:", error);
+        alert("Ocurrió un error al configurar los servicios de Google. Revisa tu Client ID.");
+        setIsInitializing(false);
+      }
     }
   }, [gapiReady, gisReady, apiConfig, updateAuthStatus]);
   
@@ -202,7 +205,7 @@ const App: React.FC = () => {
   };
 
   const showImagePicker = async (categoryId: string) => {
-    if (!apiConfig || !isGapiInitialized) return;
+    if (!apiConfig || isInitializing) return;
 
     const devKey = apiConfig.apiKey;
     const token = window.gapi.client.token;
@@ -313,12 +316,12 @@ const App: React.FC = () => {
           <p className="text-gray-400 mb-6">Accede a tus imágenes de forma segura.</p>
           <button 
             onClick={handleAuthClick}
-            disabled={!isGapiInitialized} 
+            disabled={isInitializing} 
             className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 mx-auto disabled:bg-gray-500 disabled:cursor-wait"
           >
             <GoogleIcon /> Conectar con Google Drive
           </button>
-          {!isGapiInitialized && <p className="mt-2 text-sm text-gray-400">Inicializando servicios de Google...</p>}
+          {isInitializing && <p className="mt-2 text-sm text-gray-400">Inicializando servicios de Google...</p>}
         </div>
       );
     }
