@@ -8,9 +8,10 @@ interface ImageGalleryProps {
   onImageClick: (image: Image, gallery: Image[]) => void;
   onDeleteImage: (categoryId: string, imageId: string) => void;
   onEditImage: (category: Category, image: Image) => void;
+  isEditMode: boolean;
 }
 
-const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onImageClick, onDeleteImage, onEditImage }) => {
+const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onImageClick, onDeleteImage, onEditImage, isEditMode }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleScroll = useCallback(() => {
@@ -60,13 +61,15 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         <h2 id={`gallery-title-${category.id}`} className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-purple-400 bg-clip-text text-transparent tracking-wide">
           {category.title}
         </h2>
-        <button
-          onClick={onAddImages}
-          className="flex items-center justify-center p-2 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-500 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500"
-          aria-label={`Añadir fotos a ${category.title}`}
-        >
-          <UploadIcon />
-        </button>
+        {isEditMode && (
+          <button
+            onClick={onAddImages}
+            className="flex items-center justify-center p-2 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-500 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500"
+            aria-label={`Añadir fotos a ${category.title}`}
+          >
+            <UploadIcon />
+          </button>
+        )}
       </div>
       <div ref={scrollContainerRef} className="flex overflow-x-auto space-x-2 py-4 custom-scrollbar perspective-scroll" style={{ scrollSnapType: 'x mandatory' }}>
         {category.images.map((image) => (
@@ -89,22 +92,24 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
                 loading="lazy"
               />
             </div>
-            <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <button
-                onClick={(e) => handleActionClick(e, () => onEditImage(category, image))}
-                className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label={`Editar imagen ${image.alt}`}
-              >
-                <EditIcon />
-              </button>
-              <button
-                onClick={(e) => handleActionClick(e, () => onDeleteImage(category.id, image.id))}
-                className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
-                aria-label={`Eliminar imagen ${image.alt}`}
-              >
-                <TrashIcon />
-              </button>
-            </div>
+            {isEditMode && (
+              <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <button
+                  onClick={(e) => handleActionClick(e, () => onEditImage(category, image))}
+                  className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label={`Editar imagen ${image.alt}`}
+                >
+                  <EditIcon />
+                </button>
+                <button
+                  onClick={(e) => handleActionClick(e, () => onDeleteImage(category.id, image.id))}
+                  className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  aria-label={`Eliminar imagen ${image.alt}`}
+                >
+                  <TrashIcon />
+                </button>
+              </div>
+            )}
           </div>
         ))}
         {/* Ghost element for better snapping at the end */}
