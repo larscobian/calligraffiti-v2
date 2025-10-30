@@ -67,6 +67,8 @@ const App: React.FC = () => {
     } else {
       setIsSettingsModalOpen(true);
       setIsInitializing(false);
+      setIsLoading(false);
+      setLoadingMessage('');
     }
 
     const handleGapiLoad = () => window.gapi.load('client:picker', () => setGapiReady(true));
@@ -225,10 +227,10 @@ const handleExportData = async () => {
   }, [loadImagesFromDrive]);
 
   useEffect(() => {
-    if (isEditMode && gapiReady && gisReady && apiConfig) {
+    const initGoogleClient = async () => {
       try {
         window.tokenClient = window.google.accounts.oauth2.initTokenClient({
-          client_id: apiConfig.clientId,
+          client_id: apiConfig!.clientId,
           scope: SCOPES,
           callback: (tokenResponse: any) => {
             if (tokenResponse.error) throw tokenResponse.error;
@@ -237,21 +239,22 @@ const handleExportData = async () => {
           },
         });
 
-        window.gapi.client.init({
-          apiKey: apiConfig.apiKey,
+        await window.gapi.client.init({
+          apiKey: apiConfig!.apiKey,
           discoveryDocs: DISCOVERY_DOCS,
-        }).then(() => {
-          setIsInitializing(false);
-        }).catch((err: any) => {
-          console.error("Error initializing gapi client:", err);
-          alert("Error al inicializar el cliente de Google. Revisa tu API Key.");
-          setIsInitializing(false);
         });
       } catch (error) {
         console.error("Error setting up Google services:", error);
-        alert("Ocurrió un error al configurar los servicios de Google. Revisa tu Client ID.");
+        alert("Ocurrió un error al configurar los servicios de Google. Revisa tu Client ID o API Key.");
+      } finally {
         setIsInitializing(false);
+        setIsLoading(false);
+        setLoadingMessage('');
       }
+    };
+    
+    if (isEditMode && gapiReady && gisReady && apiConfig) {
+      initGoogleClient();
     }
   }, [isEditMode, gapiReady, gisReady, apiConfig, updateAuthStatus]);
   
