@@ -181,7 +181,8 @@ const App: React.FC = () => {
             rotation: 0
           }));
           
-          return { id: categoryFolder.id, title: categoryFolder.name, images };
+          const cleanTitle = categoryFolder.name.replace(/^\d+\s*-\s*/, '');
+          return { id: categoryFolder.id, title: cleanTitle, images };
         })
       );
       setCategories(updatedCategories);
@@ -512,7 +513,7 @@ const handleExportData = async () => {
        <header className="py-6 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto text-center relative">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent">
-            Calligraffiti Studio Catalog
+            Catálogo Calligraffiti Larsek
           </h1>
           <p className="mt-2 text-lg text-gray-400">
             Ideas y referencias para tu próximo mural, cuadro o detalle.
