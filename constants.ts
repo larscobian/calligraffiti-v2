@@ -1,6 +1,12 @@
 
-
 import { Category } from './types';
+
+export const CATEGORY_ORDER = [
+  'Murales Completos',
+  'Murales Simples',
+  'Detalles / Puertas / Espejos',
+  'Cuadros y Relojes',
+];
 
 export const INITIAL_CATEGORIES: Category[] = [
   {

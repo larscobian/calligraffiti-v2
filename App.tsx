@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import ImageGallery from './components/ImageGallery';
 import Modal from './components/Modal';
@@ -6,6 +7,7 @@ import EditModal from './components/EditModal';
 import ApiSettingsModal from './components/ApiSettingsModal';
 import { SettingsIcon, GoogleIcon, EyeIcon, DownloadIcon } from './components/icons';
 import { Category, Image } from './types';
+import { CATEGORY_ORDER } from './constants';
 
 declare global {
   interface Window {
@@ -18,6 +20,25 @@ declare global {
 const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
 const SCOPES = "https://www.googleapis.com/auth/drive";
 const ROOT_FOLDER_NAME = "Calligraffiti Portafolio";
+
+const sortCategories = (categories: Category[]): Category[] => {
+  return [...categories].sort((a, b) => {
+    const indexA = CATEGORY_ORDER.indexOf(a.title);
+    const indexB = CATEGORY_ORDER.indexOf(b.title);
+
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB; // Both in order list, sort by index
+    }
+    if (indexA !== -1) {
+      return -1; // A is in list, B is not. A comes first.
+    }
+    if (indexB !== -1) {
+      return 1; // B is in list, A is not. B comes first.
+    }
+    return a.title.localeCompare(b.title); // Neither is in list, sort alphabetically
+  });
+};
+
 
 const App: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -48,7 +69,7 @@ const App: React.FC = () => {
           throw new Error('Could not load portfolio data.');
         }
         const data: Category[] = await response.json();
-        setCategories(data);
+        setCategories(sortCategories(data));
       } catch (error) {
         console.warn("Could not load portfolio.json.", error);
         setCategories([]);
@@ -116,8 +137,6 @@ const App: React.FC = () => {
       });
 
       const categoryFolders = categoriesResponse.result.files || [];
-      
-      categoryFolders.sort((a, b) => a.name.localeCompare(b.name));
 
       const updatedCategories = await Promise.all(
         categoryFolders.map(async (categoryFolder) => {
@@ -138,7 +157,7 @@ const App: React.FC = () => {
           return { id: categoryFolder.id, title: cleanTitle, images };
         })
       );
-      setCategories(updatedCategories);
+      setCategories(sortCategories(updatedCategories));
     } catch (err: any) {
       console.error("Error loading from Drive:", err);
       const errorMessage = err.result?.error?.message || err.message || JSON.stringify(err);
