@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback, useState, useMemo, useLayoutEffect } from 'react';
 import { Category, Image } from '../types';
-import { UploadIcon, TrashIcon, EditIcon } from './icons';
+import { UploadIcon, TrashIcon, EditIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
 
 interface ImageGalleryProps {
   category: Category;
@@ -13,6 +13,7 @@ interface ImageGalleryProps {
 
 const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onImageClick, onDeleteImage, onEditImage, isEditMode }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const galleryContainerRef = useRef<HTMLDivElement>(null);
   const isJumpingRef = useRef(false);
   const scrollTimeoutRef = useRef<number | null>(null);
 
@@ -26,8 +27,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  const IS_INFINITE = category.images.length > 4;
-  const IS_PERSPECTIVE = IS_INFINITE && !isMobile;
+  const IS_INFINITE = category.images.length > 3;
+  const IS_PERSPECTIVE = !isMobile;
   const CLONE_COUNT = IS_INFINITE ? Math.min(3, category.images.length) : 0;
 
   const extendedImages = useMemo(() => {
@@ -46,18 +47,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       (el): el is HTMLElement => el instanceof HTMLElement && el.classList.contains('gallery-image-item')
     );
   }, []);
-
-  useEffect(() => {
-    if (!IS_PERSPECTIVE) {
-      getItems().forEach(item => {
-        const el = item as HTMLElement;
-        el.style.transform = '';
-        el.style.zIndex = '';
-        el.style.opacity = '';
-        el.style.boxShadow = '';
-      });
-    }
-  }, [IS_PERSPECTIVE, getItems, category.images]);
   
   const handleScrollEffects = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -72,36 +61,49 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     let closestIndex = -1;
     let minDistance = Infinity;
 
-    items.forEach((itemEl, index) => {
+    items.forEach((itemEl) => {
       const el = itemEl as HTMLDivElement;
       const imageCenter = el.offsetLeft + el.offsetWidth / 2;
       const distanceFromCenter = imageCenter - scrollCenter;
       
       const absDistance = Math.abs(distanceFromCenter);
+      const itemIndex = parseInt(el.dataset.index || '0', 10);
       
       if (absDistance < minDistance) {
         minDistance = absDistance;
-        closestIndex = index;
+        closestIndex = itemIndex;
       }
       
-      if (IS_PERSPECTIVE) {
-        const scale = Math.max(0.85, 1 - absDistance / (containerWidth * 1.5));
-        const rotationY = (distanceFromCenter / (containerWidth / 2)) * -15;
-        const zIndex = Math.round(100 - absDistance / 10);
-        const opacity = Math.max(0.4, 1 - absDistance / containerWidth);
+      const scale = Math.max(0.8, 1 - absDistance / (containerWidth * 1.2));
+      const opacity = Math.max(0.3, 1 - absDistance / containerWidth);
+      const zIndex = Math.round(100 - absDistance / 10);
+      let transform = `scale(${scale})`;
 
-        el.style.transform = `rotateY(${rotationY}deg) scale(${scale})`;
-        el.style.zIndex = String(zIndex);
-        el.style.opacity = `${opacity}`;
-        el.style.boxShadow = '0 5px 15px rgba(0,0,0,0.5)';
+      if (IS_PERSPECTIVE) {
+        const rotationY = (distanceFromCenter / (containerWidth / 2)) * -20;
+        const translateX = distanceFromCenter / 3.5;
+        transform = `translateX(${translateX}px) rotateY(${rotationY}deg) scale(${scale})`;
+      } else {
+        const rotationZ = (distanceFromCenter / containerWidth) * 4;
+        const translateY = absDistance / 15;
+        transform = `translateY(${translateY}px) rotate(${rotationZ}deg) scale(${scale})`;
       }
+      
+      el.style.transform = transform;
+      el.style.zIndex = String(zIndex);
+      el.style.opacity = `${opacity}`;
     });
     
     if (closestIndex !== -1) {
-      if (IS_PERSPECTIVE) {
-        const centeredEl = items[closestIndex] as HTMLDivElement;
-        centeredEl.style.transform = `rotateY(0deg) scale(1.05)`;
-        centeredEl.style.boxShadow = `0 10px 30px -5px rgba(0,0,0,0.7)`;
+      const centeredEl = items[closestIndex] as HTMLDivElement;
+      if (centeredEl) {
+        let centeredTransform = 'scale(1.05)';
+        if (IS_PERSPECTIVE) {
+          centeredTransform = 'rotateY(0deg) scale(1.05)';
+        } else {
+           centeredTransform = 'translateY(0) rotate(0) scale(1.05)';
+        }
+        centeredEl.style.transform = centeredTransform;
         centeredEl.style.zIndex = `101`;
         centeredEl.style.opacity = `1`;
       }
@@ -119,26 +121,23 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     const items = getItems();
     if (!container || items.length < 2) return;
     
-    const { offsetWidth: itemWidth } = items[0] as HTMLElement;
-    const gap = (items[1] as HTMLElement).offsetLeft - ((items[0] as HTMLElement).offsetLeft + itemWidth);
-    const totalItemWidth = itemWidth + gap;
+    const itemWidth = (items[0] as HTMLElement).offsetWidth;
+    const itemMargin = -parseInt(window.getComputedStyle(items[0]).marginRight);
+    const totalItemWidth = itemWidth - itemMargin;
     
-    // Jump from prefix clones to real items
     if (container.scrollLeft < totalItemWidth * (CLONE_COUNT - 0.5)) {
         isJumpingRef.current = true;
         container.style.scrollBehavior = 'auto';
         container.scrollLeft += category.images.length * totalItemWidth;
-        // Force style recalculation before re-enabling smooth scroll
-        container.getBoundingClientRect();
+        container.getBoundingClientRect(); // Force style recalculation
         container.style.scrollBehavior = 'smooth';
         setTimeout(() => { isJumpingRef.current = false; }, 50);
     } 
-    // Jump from suffix clones to real items
     else if (container.scrollLeft > totalItemWidth * (category.images.length + CLONE_COUNT - 1.5)) {
         isJumpingRef.current = true;
         container.style.scrollBehavior = 'auto';
         container.scrollLeft -= category.images.length * totalItemWidth;
-        container.getBoundingClientRect();
+        container.getBoundingClientRect(); // Force style recalculation
         container.style.scrollBehavior = 'smooth';
         setTimeout(() => { isJumpingRef.current = false; }, 50);
     }
@@ -164,7 +163,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         }
     }
     handleScrollEffects();
-  }, [IS_INFINITE, CLONE_COUNT, getItems, extendedImages.length, handleScrollEffects]);
+  }, [IS_INFINITE, CLONE_COUNT, getItems, extendedImages.length, handleScrollEffects, category.id]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -193,10 +192,19 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     }
   };
 
+  const handlePrevClick = () => {
+    const prevIndex = (activeIndex - 1 + category.images.length) % category.images.length;
+    handleDotClick(prevIndex);
+  };
+  const handleNextClick = () => {
+    const nextIndex = (activeIndex + 1) % category.images.length;
+    handleDotClick(nextIndex);
+  };
+
   return (
-    <section aria-labelledby={`gallery-title-${category.id}`} className="mb-8 w-full">
-      <div className="relative text-center mb-4">
-        <h2 id={`gallery-title-${category.id}`} className="text-3xl font-bold bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent tracking-wide inline-block">
+    <section aria-labelledby={`gallery-title-${category.id}`} className="mb-4 w-full">
+      <div className="relative text-center mb-2">
+        <h2 id={`gallery-title-${category.id}`} className="text-2xl font-bold bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent tracking-wide inline-block">
           {category.title}
         </h2>
         {isEditMode && (
@@ -210,53 +218,77 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         )}
       </div>
       <div 
-        ref={scrollContainerRef} 
-        className={`flex overflow-x-auto space-x-2 py-4 custom-scrollbar ${IS_PERSPECTIVE ? 'perspective-scroll' : ''} ${!IS_INFINITE ? 'justify-center' : ''}`}
-        style={{ scrollSnapType: 'x mandatory' }}
+        ref={galleryContainerRef} 
+        className="relative group"
       >
-        {extendedImages.map((image, index) => (
-          <div 
-            key={`${image.id}-${index}`} 
-            className="gallery-image-item relative flex-shrink-0 w-64 md:w-72 rounded-lg overflow-hidden shadow-lg shadow-black/50 cursor-pointer group" 
-            style={{ scrollSnapAlign: 'center' }}
-            onClick={() => onImageClick(image, category.images)}
-            onKeyPress={(e) => e.key === 'Enter' && onImageClick(image, category.images)}
-            tabIndex={0}
-            role="button"
-            aria-label={`Ver imagen ${image.alt} en grande`}
-          >
-            <div className="aspect-[3/4] bg-gray-800 overflow-hidden">
-              <img
-                src={image.src}
-                alt={image.alt}
-                className="w-full h-full object-cover transition-transform duration-300 ease-in-out"
-                style={{transform: `rotate(${image.rotation || 0}deg)`}}
-                loading="lazy"
-              />
-            </div>
-            {isEditMode && (
-              <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <button
-                  onClick={(e) => handleActionClick(e, () => onEditImage(category, image))}
-                  className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label={`Editar imagen ${image.alt}`}
-                >
-                  <EditIcon />
-                </button>
-                <button
-                  onClick={(e) => handleActionClick(e, () => onDeleteImage(category.id, image.id))}
-                  className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
-                  aria-label={`Eliminar imagen ${image.alt}`}
-                >
-                  <TrashIcon />
-                </button>
+        <div 
+          ref={scrollContainerRef} 
+          className={`flex overflow-x-auto py-12 px-4 custom-scrollbar items-center ${IS_PERSPECTIVE ? 'perspective-scroll' : ''}`}
+          style={{ scrollSnapType: 'x mandatory' }}
+        >
+          {extendedImages.map((image, index) => (
+            <div 
+              key={`${image.id}-${index}`} 
+              data-index={index}
+              className="gallery-image-item relative flex-shrink-0 w-56 md:w-64 rounded-lg overflow-hidden shadow-lg shadow-black/50 cursor-pointer group mr-[-80px] md:mr-[-96px]" 
+              style={{ scrollSnapAlign: 'center' }}
+              onClick={() => onImageClick(image, category.images)}
+              onKeyPress={(e) => e.key === 'Enter' && onImageClick(image, category.images)}
+              tabIndex={0}
+              role="button"
+              aria-label={`Ver imagen ${image.alt} en grande`}
+            >
+              <div className="aspect-[3/4] bg-gray-800 overflow-hidden">
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="w-full h-full object-cover"
+                  style={{transform: `rotate(${image.rotation || 0}deg)`}}
+                  loading="lazy"
+                />
               </div>
-            )}
-          </div>
-        ))}
+              {isEditMode && (
+                <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button
+                    onClick={(e) => handleActionClick(e, () => onEditImage(category, image))}
+                    className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label={`Editar imagen ${image.alt}`}
+                  >
+                    <EditIcon />
+                  </button>
+                  <button
+                    onClick={(e) => handleActionClick(e, () => onDeleteImage(category.id, image.id))}
+                    className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    aria-label={`Eliminar imagen ${image.alt}`}
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        {IS_INFINITE && (
+          <>
+            <button
+              onClick={handlePrevClick}
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[102] p-2 text-white bg-black bg-opacity-20 rounded-full hover:bg-opacity-50 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 opacity-0 group-hover:opacity-100 hidden md:flex"
+              aria-label="Imagen anterior"
+            >
+              <ChevronLeftIcon />
+            </button>
+            <button
+              onClick={handleNextClick}
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[102] p-2 text-white bg-black bg-opacity-20 rounded-full hover:bg-opacity-50 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 opacity-0 group-hover:opacity-100 hidden md:flex"
+              aria-label="Siguiente imagen"
+            >
+              <ChevronRightIcon />
+            </button>
+          </>
+        )}
       </div>
       {IS_INFINITE && (
-        <div className="flex justify-center items-center mt-2 space-x-3" aria-hidden="true">
+        <div className="flex justify-center items-center mt-0 space-x-3" aria-hidden="true">
             {category.images.map((_, index) => (
                 <button
                     key={index}
