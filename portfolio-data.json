@@ -1,46 +1,121 @@
-
 [
   {
-    "id": "full-murals",
-    "title": "Murales Completos",
-    "images": [
-      { "id": "fm1", "src": "https://picsum.photos/seed/mural1/600/800", "alt": "Full calligraffiti mural in a studio" },
-      { "id": "fm2", "src": "https://picsum.photos/seed/mural2/600/800", "alt": "Elaborate wall art" },
-      { "id": "fm3", "src": "https://picsum.photos/seed/mural3/600/800", "alt": "Large scale calligraffiti" },
-      { "id": "fm4", "src": "https://picsum.photos/seed/mural4/600/800", "alt": "Studio interior with full mural" },
-      { "id": "fm5", "src": "https://picsum.photos/seed/mural5/600/800", "alt": "Artistic mural design" }
-    ]
-  },
-  {
-    "id": "simple-murals",
-    "title": "Murales Simples",
-    "images": [
-      { "id": "sm1", "src": "https://picsum.photos/seed/simple1/600/800", "alt": "Simple calligraffiti accent wall" },
-      { "id": "sm2", "src": "https://picsum.photos/seed/simple2/600/800", "alt": "Minimalist wall art" },
-      { "id": "sm3", "src": "https://picsum.photos/seed/simple3/600/800", "alt": "Clean calligraffiti design" },
-      { "id": "sm4", "src": "https://picsum.photos/seed/simple4/600/800", "alt": "Subtle mural piece" }
-    ]
-  },
-  {
-    "id": "details",
-    "title": "Detalles / Puertas / Espejos",
-    "images": [
-      { "id": "d1", "src": "https://picsum.photos/seed/detail1/600/800", "alt": "Calligraffiti on a studio door" },
-      { "id": "d2", "src": "https://picsum.photos/seed/detail2/600/800", "alt": "Etched mirror with calligraffiti" },
-      { "id": "d3", "src": "https://picsum.photos/seed/detail3/600/800", "alt": "Detail work on furniture" },
-      { "id": "d4", "src": "https://picsum.photos/seed/detail4/600/800", "alt": "Calligraffiti on a window" },
-      { "id": "d5", "src": "https://picsum.photos/seed/detail5/600/800", "alt": "Small accent details" }
-    ]
-  },
-  {
-    "id": "paintings-and-clocks",
+    "id": "cuadros-y-relojes",
     "title": "Cuadros y Relojes",
     "images": [
-      { "id": "p1", "src": "https://picsum.photos/seed/painting1/600/800", "alt": "Framed calligraffiti artwork" },
-      { "id": "p2", "src": "https://picsum.photos/seed/painting2/600/800", "alt": "Canvas with calligraffiti" },
-      { "id": "p3", "src": "https://picsum.photos/seed/painting3/600/800", "alt": "Set of framed pieces" },
-      { "id": "c1", "src": "https://picsum.photos/seed/clock1/600/800", "alt": "Custom calligraffiti wall clock" },
-      { "id": "c2", "src": "https://picsum.photos/seed/clock2/600/800", "alt": "Artistic clock design" }
+      {
+        "id": "1MadBNyea4BmWRQdj1ZExWJBAYelpkkar",
+        "src": "/images/cuadros-y-relojes/155573d4b6641f0850883aa545366ef0-1MadBN.jpg",
+        "alt": "155573d4b6641f0850883aa545366ef0.jpg"
+      }
+    ]
+  },
+  {
+    "id": "detalles-puertas-espejos",
+    "title": "Detalles / Puertas / Espejos",
+    "images": [
+      {
+        "id": "10s83LkVxaJYLOHg-bUBorh6bdtDK9IWe",
+        "src": "/images/detalles-puertas-espejos/5598602541853642676705653632550764694403998n-10s83L.jpg",
+        "alt": "559860254_18536426767056536_32550764694403998_n.jpg"
+      },
+      {
+        "id": "1nWQ1EAgjb8Rnw_l2RsyFc9tzvnLDHtXM",
+        "src": "/images/detalles-puertas-espejos/87fc3c84ee6be441af92bd120af25b4f-1nWQ1E.jpg",
+        "alt": "87fc3c84ee6be441af92bd120af25b4f.jpg"
+      },
+      {
+        "id": "16icJH-sXHr0w5mO8KkCywF0yxus1nIrp",
+        "src": "/images/detalles-puertas-espejos/d91cd91bca73567d8d43d269e7ce5349-16icJH.jpg",
+        "alt": "d91cd91bca73567d8d43d269e7ce5349.jpg"
+      },
+      {
+        "id": "1iI0MHBmQbMF6pCuN0z6qXPUF10Sdu9jm",
+        "src": "/images/detalles-puertas-espejos/54070498918525601819014730490801433648230696n-1iI0MH.jpg",
+        "alt": "540704989_18525601819014730_490801433648230696_n.jpg"
+      },
+      {
+        "id": "1VxETSsxVeaHAuCA4V8PJCoCrjA7P7iIM",
+        "src": "/images/detalles-puertas-espejos/21d87afc43820e707f58604164d49115-1VxETS.jpg",
+        "alt": "21d87afc43820e707f58604164d49115.jpg"
+      },
+      {
+        "id": "1tUnYJ1liM_pZxIQ6g2jZ4q5h8JMHc7lC",
+        "src": "/images/detalles-puertas-espejos/img2489-1tUnYJ.webp",
+        "alt": "IMG_2489.webp"
+      },
+      {
+        "id": "1AQcDJhnpQgb6lb-xQHrSjeqkmYzWPKyw",
+        "src": "/images/detalles-puertas-espejos/images-2-1AQcDJ.jpeg",
+        "alt": "images (2).jpeg"
+      },
+      {
+        "id": "1ceZEnQwx2THphVi7xjHv-UmmpxmN3jyy",
+        "src": "/images/detalles-puertas-espejos/003dc740b691c839a3040777f4369682-1ceZEn.jpg",
+        "alt": "003dc740b691c839a3040777f4369682.jpg"
+      },
+      {
+        "id": "17hi2gB0A97oBvx0szY419qz11iOeOf5w",
+        "src": "/images/detalles-puertas-espejos/images-1-17hi2g.jpeg",
+        "alt": "images (1).jpeg"
+      }
+    ]
+  },
+  {
+    "id": "murales-completos",
+    "title": "Murales Completos",
+    "images": [
+      {
+        "id": "1dx9nNnwvcQW7dspbFhISe3xzAeb4D4vV",
+        "src": "/images/murales-completos/469132550179917821177253294470396657500770172n-1dx9nN.jpg",
+        "alt": "469132550_17991782117725329_4470396657500770172_n.jpg"
+      },
+      {
+        "id": "1apx7a2Mi42HSIUSgbHgO0zTaePwMW7Za",
+        "src": "/images/murales-completos/682211023f0974646a289345tralalero-1apx7a.png",
+        "alt": "682211023f0974646a289345_tralalero.png"
+      },
+      {
+        "id": "18gBlyslsLnaO-5f5ZJAPk0hfDleoX2yu",
+        "src": "/images/murales-completos/3996947a9904a52b3e96154243c6d3c0-18gBly.jpg",
+        "alt": "3996947a9904a52b3e96154243c6d3c0.jpg"
+      },
+      {
+        "id": "1uEEqq5HU1_YeDp7r35vVTlKx01UMw2H9",
+        "src": "/images/murales-completos/3a49b23c129843d60624ce3b5b098bcc-1uEEqq.jpg",
+        "alt": "3a49b23c129843d60624ce3b5b098bcc.jpg"
+      },
+      {
+        "id": "1Ke6j38gMT_JdgOSUcunLzZhM-rAs9vUO",
+        "src": "/images/murales-completos/9f67f2c1ddf368bda55fc6f1134534de-1Ke6j3.jpg",
+        "alt": "9f67f2c1ddf368bda55fc6f1134534de.jpg"
+      },
+      {
+        "id": "1HUH3sRQAwBNayNXbklMrNAtrsEkPjLkN",
+        "src": "/images/murales-completos/87e8f1f0a8fae98f3113590bb955e957-1HUH3s.jpg",
+        "alt": "87e8f1f0a8fae98f3113590bb955e957.jpg"
+      }
+    ]
+  },
+  {
+    "id": "murales-simples",
+    "title": "Murales Simples",
+    "images": [
+      {
+        "id": "1hcIZKNjQtfWZ0TiL9AUyMgAbU_V72Diz",
+        "src": "/images/murales-simples/f4a949c2740de2439d053304621d2cc4-1hcIZK.jpg",
+        "alt": "f4a949c2740de2439d053304621d2cc4.jpg"
+      },
+      {
+        "id": "1-P-h6wf72d6DxcSj8wjH9NR1j2lc1Oyg",
+        "src": "/images/murales-simples/6b5af23c3911915bf88a11604fe7fd6c-1-P-h6.jpg",
+        "alt": "6b5af23c3911915bf88a11604fe7fd6c.jpg"
+      },
+      {
+        "id": "1hAXIMOI7qCs5kbvuU8vFezBgYAPtfPhc",
+        "src": "/images/murales-simples/7f7fc77123c253b36423cfa31040ed7e-1hAXIM.jpg",
+        "alt": "7f7fc77123c253b36423cfa31040ed7e.jpg"
+      }
     ]
   }
 ]
