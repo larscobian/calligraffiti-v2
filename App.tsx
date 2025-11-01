@@ -255,7 +255,7 @@ const handleExportData = async () => {
                     
                     newImages.push({
                         id: image.id,
-                        src: `/images/${sanitizedCategoryTitle}/${sanitizedImageName}`,
+                        src: `images/${sanitizedCategoryTitle}/${sanitizedImageName}`,
                         alt: image.alt,
                     });
 
