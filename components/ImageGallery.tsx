@@ -49,6 +49,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   }, []);
   
   const handleScrollEffects = useCallback(() => {
+    if (isJumpingRef.current) return;
     const container = scrollContainerRef.current;
     if (!container) return;
 
@@ -131,7 +132,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         container.scrollLeft += category.images.length * totalItemWidth;
         container.getBoundingClientRect(); // Force style recalculation
         container.style.scrollBehavior = 'smooth';
-        setTimeout(() => { isJumpingRef.current = false; }, 50);
+        setTimeout(() => { isJumpingRef.current = false; handleScrollEffects(); }, 50);
     } 
     else if (container.scrollLeft > totalItemWidth * (category.images.length + CLONE_COUNT - 1.5)) {
         isJumpingRef.current = true;
@@ -139,16 +140,49 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         container.scrollLeft -= category.images.length * totalItemWidth;
         container.getBoundingClientRect(); // Force style recalculation
         container.style.scrollBehavior = 'smooth';
-        setTimeout(() => { isJumpingRef.current = false; }, 50);
+        setTimeout(() => { isJumpingRef.current = false; handleScrollEffects(); }, 50);
     }
-  }, [IS_INFINITE, CLONE_COUNT, category.images.length, getItems]);
+  }, [IS_INFINITE, CLONE_COUNT, category.images.length, getItems, handleScrollEffects]);
+
+  const snapToCenter = useCallback(() => {
+    if (isJumpingRef.current) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const items = getItems();
+    if (items.length === 0) return;
+
+    const scrollCenter = container.scrollLeft + container.offsetWidth / 2;
+
+    let closestItem: HTMLElement | null = null;
+    let minDistance = Infinity;
+
+    items.forEach(itemEl => {
+      const el = itemEl as HTMLDivElement;
+      const imageCenter = el.offsetLeft + el.offsetWidth / 2;
+      const distance = Math.abs(imageCenter - scrollCenter);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestItem = el;
+      }
+    });
+
+    if (closestItem) {
+      const newScrollLeft = closestItem.offsetLeft - (container.offsetWidth - closestItem.offsetWidth) / 2;
+      if (Math.abs(container.scrollLeft - newScrollLeft) > 1) {
+        container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+      }
+    }
+  }, [getItems]);
 
   const onScroll = useCallback(() => {
     if (isJumpingRef.current) return;
     handleScrollEffects();
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    scrollTimeoutRef.current = window.setTimeout(handleInfiniteJump, 150);
-  }, [handleScrollEffects, handleInfiniteJump]);
+    scrollTimeoutRef.current = window.setTimeout(() => {
+        handleInfiniteJump();
+        snapToCenter();
+    }, 200); // Increased timeout for a smoother feel after inertial scroll
+  }, [handleScrollEffects, handleInfiniteJump, snapToCenter]);
   
   useLayoutEffect(() => {
     const container = scrollContainerRef.current;
@@ -202,8 +236,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   };
 
   return (
-    <section aria-labelledby={`gallery-title-${category.id}`} className="mb-4 w-full">
-      <div className="relative text-center mb-2">
+    <section aria-labelledby={`gallery-title-${category.id}`} className="w-full py-4">
+      <div className="relative text-center">
         <h2 id={`gallery-title-${category.id}`} className="text-2xl font-bold bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent tracking-wide inline-block">
           {category.title}
         </h2>
@@ -223,7 +257,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       >
         <div 
           ref={scrollContainerRef} 
-          className={`flex overflow-x-auto py-12 px-4 custom-scrollbar items-center ${IS_PERSPECTIVE ? 'perspective-scroll' : ''}`}
+          className={`flex overflow-x-auto py-8 px-4 custom-scrollbar items-center ${IS_PERSPECTIVE ? 'perspective-scroll' : ''}`}
           style={{ scrollSnapType: 'x mandatory' }}
         >
           {extendedImages.map((image, index) => (
@@ -288,7 +322,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         )}
       </div>
       {IS_INFINITE && (
-        <div className="flex justify-center items-center mt-0 space-x-3" aria-hidden="true">
+        <div className="flex justify-center items-center mt-2 space-x-3" aria-hidden="true">
             {category.images.map((_, index) => (
                 <button
                     key={index}
