@@ -12,68 +12,12 @@ declare global {
     gapi: any;
     google: any;
     tokenClient: any;
-    JSZip: any;
   }
 }
 
 const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
-const SCOPES = "https://www.googleapis.com/auth/drive"; // Full scope to allow reading and uploading
+const SCOPES = "https://www.googleapis.com/auth/drive";
 const ROOT_FOLDER_NAME = "Calligraffiti Portafolio";
-
-async function applyTransformations(
-    imageBlob: Blob, 
-    rotation: number = 0, 
-    crop: { x: number; y: number; width: number; height: number; } | undefined,
-    mimeType: string = 'image/jpeg'
-): Promise<Blob> {
-    const img = await createImageBitmap(imageBlob);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) throw new Error('Could not get canvas context');
-
-    const rads = rotation * Math.PI / 180;
-    const cos = Math.cos(rads);
-    const sin = Math.sin(rads);
-
-    const cropRect = crop ? {
-        x: img.width * (crop.x / 100),
-        y: img.height * (crop.y / 100),
-        width: img.width * (crop.width / 100),
-        height: img.height * (crop.height / 100),
-    } : { x: 0, y: 0, width: img.width, height: img.height };
-
-    const rotatedCropWidth = Math.abs(cropRect.width * cos) + Math.abs(cropRect.height * sin);
-    const rotatedCropHeight = Math.abs(cropRect.width * sin) + Math.abs(cropRect.height * cos);
-
-    canvas.width = rotatedCropWidth;
-    canvas.height = rotatedCropHeight;
-
-    ctx.translate(rotatedCropWidth / 2, rotatedCropHeight / 2);
-    ctx.rotate(rads);
-    
-    ctx.drawImage(
-        img,
-        cropRect.x,
-        cropRect.y,
-        cropRect.width,
-        cropRect.height,
-        -cropRect.width / 2,
-        -cropRect.height / 2,
-        cropRect.width,
-        cropRect.height
-    );
-
-    return new Promise((resolve, reject) => {
-        canvas.toBlob(blob => {
-            if (blob) {
-                resolve(blob);
-            } else {
-                reject(new Error('Canvas to Blob conversion failed'));
-            }
-        }, mimeType, 0.95);
-    });
-}
 
 const App: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -93,20 +37,20 @@ const App: React.FC = () => {
   const [editingImage, setEditingImage] = useState<{category: Category, image: Image} | null>(null);
   
   useEffect(() => {
-    if (isEditMode) return; // Don't load static data in edit mode
+    if (isEditMode) return;
     
     const loadStaticData = async () => {
       setIsLoading(true);
       setLoadingMessage('Cargando catálogo...');
       try {
-        const response = await fetch('/portfolio-data.json');
+        const response = await fetch('/public-portfolio-drive-data.json');
         if (!response.ok) {
           throw new Error('Could not load portfolio data.');
         }
         const data: Category[] = await response.json();
         setCategories(data);
       } catch (error) {
-        console.warn("Could not load portfolio-data.json.", error);
+        console.warn("Could not load public-portfolio-drive-data.json.", error);
         setCategories([]);
       } finally {
         setIsLoading(false);
@@ -173,7 +117,6 @@ const App: React.FC = () => {
 
       const categoryFolders = categoriesResponse.result.files || [];
       
-      // Defensive client-side sort to guarantee order.
       categoryFolders.sort((a, b) => a.name.localeCompare(b.name));
 
       const updatedCategories = await Promise.all(
@@ -206,86 +149,42 @@ const App: React.FC = () => {
     }
   }, []);
   
-const handleExportData = async () => {
-    if (!window.JSZip) {
-        alert("La librería de compresión (JSZip) no se ha cargado. Por favor, revisa tu conexión a internet y recarga la página.");
+const handlePublishChanges = () => {
+    if (categories.length === 0) {
+        alert("No hay nada que publicar. Añade algunas imágenes primero.");
         return;
     }
 
+    setLoadingMessage('Generando datos para publicación...');
     setIsLoading(true);
-    setLoadingMessage('Iniciando exportación...');
-
+    
     try {
-        const zip = new window.JSZip();
-        const newPublicData = [];
-        const slugify = (text: string) => text.toLowerCase().replace(/[\s/]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-');
+        const publicData = categories.map(category => ({
+            id: category.id,
+            title: category.title,
+            images: category.images.map(image => ({
+                id: image.id,
+                src: image.src, // This is the Google Drive thumbnailLink
+                alt: image.alt,
+                rotation: image.rotation,
+                crop: image.crop,
+            }))
+        }));
 
-        for (const category of categories) {
-            setLoadingMessage(`Procesando categoría: ${category.title}`);
-            const sanitizedCategoryTitle = slugify(category.title);
-            const newImages = [];
-            
-            for (const image of category.images) {
-                try {
-                    const metaResponse = await window.gapi.client.drive.files.get({
-                        fileId: image.id,
-                        fields: 'name, mimeType'
-                    });
-                    const originalName = metaResponse.result.name;
-                    const mimeType = metaResponse.result.mimeType || 'image/jpeg';
-                    const extension = originalName.split('.').pop() || 'jpg';
-                    const sanitizedImageName = `${slugify(originalName.replace(/\.[^/.]+$/, ""))}-${image.id.slice(0, 6)}.${extension}`;
-                    
-                    setLoadingMessage(`Descargando: ${originalName}`);
-                    const imageResponse = await window.gapi.client.drive.files.get({
-                        fileId: image.id,
-                        alt: 'media'
-                    });
-
-                    const imagePath = `public/images/${sanitizedCategoryTitle}/${sanitizedImageName}`;
-                    
-                    if (image.rotation || image.crop) {
-                        setLoadingMessage(`Aplicando ediciones a: ${originalName}`);
-                        const imageBlob = new Blob([imageResponse.body], { type: mimeType });
-                        const processedBlob = await applyTransformations(imageBlob, image.rotation, image.crop, mimeType);
-                        zip.file(imagePath, processedBlob);
-                    } else {
-                        zip.file(imagePath, imageResponse.body, { binary: true });
-                    }
-                    
-                    newImages.push({
-                        id: image.id,
-                        src: `images/${sanitizedCategoryTitle}/${sanitizedImageName}`,
-                        alt: image.alt,
-                    });
-
-                } catch (imgErr: any) {
-                    console.error(`Error procesando la imagen ${image.id} (${image.alt}):`, imgErr);
-                    alert(`No se pudo procesar la imagen "${image.alt}". Saltando...`);
-                }
-            }
-            newPublicData.push({ ...category, id: sanitizedCategoryTitle, images: newImages });
-        }
-        
-        setLoadingMessage('Generando archivo de datos...');
-        zip.file('portfolio-data.json', JSON.stringify(newPublicData, null, 2));
-
-        setLoadingMessage('Comprimiendo archivos...');
-        const content = await zip.generateAsync({ type: 'blob' });
-        
+        const blob = new Blob([JSON.stringify(publicData, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(content);
-        a.download = 'calligraffiti-portfolio-export.zip';
+        a.href = URL.createObjectURL(blob);
+        a.download = 'public-portfolio-drive-data.json';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(a.href);
 
-        alert("¡Exportación completa! Descomprime el archivo, reemplaza la carpeta 'public' y el archivo 'portfolio-data.json' en tu proyecto, y sube los cambios para desplegarlos.");
+        alert("¡Datos generados! Sube el archivo 'public-portfolio-drive-data.json' descargado a la carpeta 'public' de tu proyecto y despliega los cambios.");
 
     } catch (err: any) {
-        console.error("Error durante la exportación:", err);
-        alert(`Ocurrió un error durante la exportación: ${err.message}`);
+        console.error("Error durante la publicación:", err);
+        alert(`Ocurrió un error: ${err.message}`);
     } finally {
         setIsLoading(false);
         setLoadingMessage('');
@@ -374,33 +273,11 @@ const handleExportData = async () => {
   };
 
   const handleImageClick = async (image: Image, gallery: Image[]) => {
-    if (isEditMode && isSignedIn) {
-        setLoadingMessage('Cargando imagen en alta resolución...');
-        setIsLoading(true);
-        try {
-            const imageContent = await window.gapi.client.drive.files.get({
-                fileId: image.id,
-                alt: 'media'
-            });
-            const blob = new Blob([imageContent.body], { type: imageContent.headers['Content-Type'] });
-            const objectURL = URL.createObjectURL(blob);
-            setModalState({ image: { ...image, src: objectURL }, gallery });
-        } catch (err) {
-            console.error("Error loading full-res image:", err);
-            alert("No se pudo cargar la imagen en alta resolución.");
-        } finally {
-            setIsLoading(false);
-            setLoadingMessage('');
-        }
-    } else {
-        setModalState({ image, gallery });
-    }
+    // In both modes, we use the thumbnail link which is already high-res enough for the modal
+    setModalState({ image, gallery });
   };
   
   const handleCloseModal = () => {
-    if (modalState && modalState.image.src.startsWith('blob:')) {
-        URL.revokeObjectURL(modalState.image.src);
-    }
     setModalState(null);
   };
 
@@ -472,8 +349,8 @@ const handleExportData = async () => {
         <button onClick={handleExitEditMode} className="flex items-center gap-2 text-sm bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-3 rounded-md transition-colors">
             <EyeIcon /> Ver Modo Público
         </button>
-        <button onClick={handleExportData} className="flex items-center gap-2 text-sm bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-3 rounded-md transition-colors">
-            <DownloadIcon /> Exportar para Publicar
+        <button onClick={handlePublishChanges} className="flex items-center gap-2 text-sm bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-3 rounded-md transition-colors">
+            <DownloadIcon /> Publicar Cambios
         </button>
     </div>
   );
