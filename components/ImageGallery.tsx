@@ -41,8 +41,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   }, [category.images, IS_INFINITE, CLONE_COUNT]);
 
   const getItems = useCallback(() => {
-    // FIX: The type of `el` was being inferred as `unknown`. Using a type predicate
-    // with `instanceof HTMLElement` ensures type safety before accessing `classList`.
     return Array.from(scrollContainerRef.current?.children || []).filter(
       (el): el is HTMLElement => el instanceof HTMLElement && el.classList.contains('gallery-image-item')
     );
@@ -181,23 +179,61 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     scrollTimeoutRef.current = window.setTimeout(() => {
         handleInfiniteJump();
         snapToCenter();
-    }, 200); // Increased timeout for a smoother feel after inertial scroll
+    }, 200);
   }, [handleScrollEffects, handleInfiniteJump, snapToCenter]);
   
+  // This effect runs once when the gallery is mounted or images change.
+  // It centers the first "real" image in the view.
   useLayoutEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    
-    if (IS_INFINITE) {
-        const items = getItems();
-        if(items.length > CLONE_COUNT) {
-          const firstRealImage = items[CLONE_COUNT] as HTMLElement;
-          const newScrollLeft = firstRealImage.offsetLeft - (container.offsetWidth - firstRealImage.offsetWidth) / 2;
-          container.scrollLeft = newScrollLeft;
-        }
-    }
-    handleScrollEffects();
-  }, [IS_INFINITE, CLONE_COUNT, getItems, extendedImages.length, handleScrollEffects, category.id]);
+
+    // A small delay to ensure all DOM elements are painted and have their final dimensions.
+    const timer = setTimeout(() => {
+      const items = getItems();
+      if (items.length === 0) return;
+
+      const indexToCenter = IS_INFINITE ? CLONE_COUNT : 0;
+      const targetElement = items[indexToCenter] as HTMLElement;
+
+      if (targetElement) {
+        const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
+        container.scrollLeft = newScrollLeft;
+        // After setting the position, apply the 3D/scaling effects.
+        handleScrollEffects();
+      }
+    }, 50); // Using a 50ms delay for robustness.
+
+    return () => clearTimeout(timer);
+  }, [IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects, category.id, extendedImages.length]);
+
+  // This effect ensures the currently active image stays centered when the window is resized.
+  useEffect(() => {
+    const handleResize = () => {
+      const container = scrollContainerRef.current;
+      const items = getItems();
+      if (!container || items.length === 0) return;
+
+      const targetDomIndex = IS_INFINITE ? activeIndex + CLONE_COUNT : activeIndex;
+      const targetElement = items[targetDomIndex] as HTMLElement;
+
+      if (targetElement) {
+        // Calculate the new scroll position to keep the target centered.
+        const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
+        
+        // Disable smooth scrolling for an instant adjustment on resize.
+        container.style.scrollBehavior = 'auto';
+        container.scrollTo({ left: newScrollLeft, behavior: 'auto' });
+        container.style.scrollBehavior = ''; // Revert to CSS default
+        
+        // Re-apply visual effects.
+        handleScrollEffects();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [activeIndex, IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -264,7 +300,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
             <div 
               key={`${image.id}-${index}`} 
               data-index={index}
-              className="gallery-image-item relative flex-shrink-0 w-56 md:w-64 rounded-lg overflow-hidden shadow-lg shadow-black/50 cursor-pointer group mr-[-80px] md:mr-[-96px]" 
+              className="gallery-image-item relative flex-shrink-0 w-72 md:w-80 rounded-lg overflow-hidden shadow-lg shadow-black/50 cursor-pointer group mr-[-108px] md:mr-[-120px]" 
               style={{ scrollSnapAlign: 'center' }}
               onClick={() => onImageClick(image, category.images)}
               onKeyPress={(e) => e.key === 'Enter' && onImageClick(image, category.images)}
