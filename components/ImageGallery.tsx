@@ -28,6 +28,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   }, []);
 
   const IS_INFINITE = category.images.length > 3;
+  // Disable perspective on mobile for performance
   const IS_PERSPECTIVE = !isMobile;
   const CLONE_COUNT = IS_INFINITE ? Math.min(3, category.images.length) : 0;
 
@@ -47,7 +48,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   }, []);
   
   const handleScrollEffects = useCallback(() => {
-    if (isJumpingRef.current) return;
+    if (isJumpingRef.current || isMobile) return;
     const container = scrollContainerRef.current;
     if (!container) return;
 
@@ -111,7 +112,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       setActiveIndex(realIndex);
     }
 
-  }, [getItems, IS_PERSPECTIVE, CLONE_COUNT, category.images.length]);
+  }, [getItems, IS_PERSPECTIVE, CLONE_COUNT, category.images.length, isMobile]);
 
   const handleInfiniteJump = useCallback(() => {
     if (!IS_INFINITE || isJumpingRef.current) return;
@@ -130,7 +131,10 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         container.scrollLeft += category.images.length * totalItemWidth;
         container.getBoundingClientRect(); // Force style recalculation
         container.style.scrollBehavior = 'smooth';
-        setTimeout(() => { isJumpingRef.current = false; handleScrollEffects(); }, 50);
+        setTimeout(() => { 
+          isJumpingRef.current = false;
+          if (!isMobile) handleScrollEffects();
+        }, 50);
     } 
     else if (container.scrollLeft > totalItemWidth * (category.images.length + CLONE_COUNT - 1.5)) {
         isJumpingRef.current = true;
@@ -138,12 +142,15 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         container.scrollLeft -= category.images.length * totalItemWidth;
         container.getBoundingClientRect(); // Force style recalculation
         container.style.scrollBehavior = 'smooth';
-        setTimeout(() => { isJumpingRef.current = false; handleScrollEffects(); }, 50);
+        setTimeout(() => { 
+          isJumpingRef.current = false; 
+          if (!isMobile) handleScrollEffects();
+        }, 50);
     }
-  }, [IS_INFINITE, CLONE_COUNT, category.images.length, getItems, handleScrollEffects]);
+  }, [IS_INFINITE, CLONE_COUNT, category.images.length, getItems, handleScrollEffects, isMobile]);
 
   const snapToCenter = useCallback(() => {
-    if (isJumpingRef.current) return;
+    if (isJumpingRef.current || isMobile) return;
     const container = scrollContainerRef.current;
     if (!container) return;
     const items = getItems();
@@ -170,25 +177,88 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
       }
     }
-  }, [getItems]);
+  }, [getItems, isMobile]);
 
   const onScroll = useCallback(() => {
-    if (isJumpingRef.current) return;
+    if (isJumpingRef.current || isMobile) return;
     handleScrollEffects();
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     scrollTimeoutRef.current = window.setTimeout(() => {
         handleInfiniteJump();
         snapToCenter();
     }, 200);
-  }, [handleScrollEffects, handleInfiniteJump, snapToCenter]);
+  }, [handleScrollEffects, handleInfiniteJump, snapToCenter, isMobile]);
   
-  // This effect runs once when the gallery is mounted or images change.
-  // It centers the first "real" image in the view.
+  // DESKTOP: Use JS-driven scroll effects
+  useEffect(() => {
+    if (isMobile) return;
+    const container = scrollContainerRef.current;
+    container?.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      container?.removeEventListener('scroll', onScroll);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    };
+  }, [isMobile, onScroll]);
+
+  // MOBILE: Use IntersectionObserver for performance
+  useEffect(() => {
+    if (!isMobile) return;
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const items = getItems();
+    if (items.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const intersectingEntries = entries.filter(e => e.isIntersecting);
+        if (intersectingEntries.length === 0) return;
+
+        let mostCenteredEntry = intersectingEntries[0];
+        let minDistance = Infinity;
+        const scrollCenter = scrollContainer.scrollLeft + scrollContainer.offsetWidth / 2;
+
+        intersectingEntries.forEach(entry => {
+            const el = entry.target as HTMLElement;
+            const imageCenter = el.offsetLeft + el.offsetWidth / 2;
+            const distance = Math.abs(scrollCenter - imageCenter);
+            if (distance < minDistance) {
+                minDistance = distance;
+                mostCenteredEntry = entry;
+            }
+        });
+
+        const el = mostCenteredEntry.target as HTMLElement;
+        const index = parseInt(el.dataset.index || '0', 10);
+        const realIndex = (index - CLONE_COUNT + category.images.length) % category.images.length;
+        setActiveIndex(realIndex);
+      },
+      { root: scrollContainer, threshold: 0.5 }
+    );
+    items.forEach(item => observer.observe(item));
+    return () => items.forEach(item => observer.unobserve(item));
+  }, [isMobile, getItems, CLONE_COUNT, category.images.length]);
+
+  // MOBILE: Lightweight scroll listener for infinite jump
+  useEffect(() => {
+      if (!isMobile) return;
+      const container = scrollContainerRef.current;
+      if (!container) return;
+      let scrollEndTimer: number;
+      const handleMobileScrollEnd = () => {
+          clearTimeout(scrollEndTimer);
+          scrollEndTimer = window.setTimeout(() => {
+              handleInfiniteJump();
+          }, 150);
+      };
+      container.addEventListener('scroll', handleMobileScrollEnd);
+      return () => container.removeEventListener('scroll', handleMobileScrollEnd);
+  }, [isMobile, handleInfiniteJump]);
+
   useLayoutEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    // A small delay to ensure all DOM elements are painted and have their final dimensions.
     const timer = setTimeout(() => {
       const items = getItems();
       if (items.length === 0) return;
@@ -199,15 +269,13 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       if (targetElement) {
         const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
         container.scrollLeft = newScrollLeft;
-        // After setting the position, apply the 3D/scaling effects.
-        handleScrollEffects();
+        if (!isMobile) handleScrollEffects();
       }
-    }, 50); // Using a 50ms delay for robustness.
+    }, 50);
 
     return () => clearTimeout(timer);
-  }, [IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects, category.id, extendedImages.length]);
+  }, [IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects, category.id, extendedImages.length, isMobile]);
 
-  // This effect ensures the currently active image stays centered when the window is resized.
   useEffect(() => {
     const handleResize = () => {
       const container = scrollContainerRef.current;
@@ -218,31 +286,17 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       const targetElement = items[targetDomIndex] as HTMLElement;
 
       if (targetElement) {
-        // Calculate the new scroll position to keep the target centered.
         const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
-        
-        // Disable smooth scrolling for an instant adjustment on resize.
         container.style.scrollBehavior = 'auto';
         container.scrollTo({ left: newScrollLeft, behavior: 'auto' });
-        container.style.scrollBehavior = ''; // Revert to CSS default
-        
-        // Re-apply visual effects.
-        handleScrollEffects();
+        container.style.scrollBehavior = '';
+        if (!isMobile) handleScrollEffects();
       }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [activeIndex, IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects]);
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    container?.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      container?.removeEventListener('scroll', onScroll);
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    };
-  }, [onScroll]);
+  }, [activeIndex, IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects, isMobile]);
 
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
@@ -296,47 +350,59 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
           className={`flex overflow-x-auto py-8 px-4 custom-scrollbar items-center ${IS_PERSPECTIVE ? 'perspective-scroll' : ''}`}
           style={{ scrollSnapType: 'x mandatory' }}
         >
-          {extendedImages.map((image, index) => (
-            <div 
-              key={`${image.id}-${index}`} 
-              data-index={index}
-              className="gallery-image-item relative flex-shrink-0 w-72 md:w-80 rounded-lg overflow-hidden shadow-lg shadow-black/50 cursor-pointer group mr-[-108px] md:mr-[-120px]" 
-              style={{ scrollSnapAlign: 'center' }}
-              onClick={() => onImageClick(image, category.images)}
-              onKeyPress={(e) => e.key === 'Enter' && onImageClick(image, category.images)}
-              tabIndex={0}
-              role="button"
-              aria-label={`Ver imagen ${image.alt} en grande`}
-            >
-              <div className="aspect-[3/4] bg-gray-800 overflow-hidden">
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  className="w-full h-full object-cover"
-                  style={{transform: `rotate(${image.rotation || 0}deg)`}}
-                  loading="lazy"
-                />
-              </div>
-              {isEditMode && (
-                <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button
-                    onClick={(e) => handleActionClick(e, () => onEditImage(category, image))}
-                    className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    aria-label={`Editar imagen ${image.alt}`}
-                  >
-                    <EditIcon />
-                  </button>
-                  <button
-                    onClick={(e) => handleActionClick(e, () => onDeleteImage(category.id, image.id))}
-                    className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
-                    aria-label={`Eliminar imagen ${image.alt}`}
-                  >
-                    <TrashIcon />
-                  </button>
+          {extendedImages.map((image, index) => {
+             const realIndex = (index - CLONE_COUNT + category.images.length) % category.images.length;
+             const isActive = realIndex === activeIndex;
+             const classNames = [
+                 'gallery-image-item',
+                 'relative flex-shrink-0 w-72 md:w-80 rounded-lg overflow-hidden shadow-lg shadow-black/50 cursor-pointer group',
+                 'mr-[-108px] md:mr-[-120px]',
+                 isMobile ? 'mobile-transform' : '',
+                 isMobile && isActive ? 'is-active' : ''
+             ].filter(Boolean).join(' ');
+
+            return (
+              <div 
+                key={`${image.id}-${index}`} 
+                data-index={index}
+                className={classNames}
+                style={{ scrollSnapAlign: 'center' }}
+                onClick={() => onImageClick(image, category.images)}
+                onKeyPress={(e) => e.key === 'Enter' && onImageClick(image, category.images)}
+                tabIndex={0}
+                role="button"
+                aria-label={`Ver imagen ${image.alt} en grande`}
+              >
+                <div className="aspect-[3/4] bg-gray-800 overflow-hidden">
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="w-full h-full object-cover"
+                    style={{transform: `rotate(${image.rotation || 0}deg)`}}
+                    loading="lazy"
+                  />
                 </div>
-              )}
-            </div>
-          ))}
+                {isEditMode && (
+                  <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button
+                      onClick={(e) => handleActionClick(e, () => onEditImage(category, image))}
+                      className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      aria-label={`Editar imagen ${image.alt}`}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      onClick={(e) => handleActionClick(e, () => onDeleteImage(category.id, image.id))}
+                      className="p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      aria-label={`Eliminar imagen ${image.alt}`}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
         {IS_INFINITE && (
           <>
