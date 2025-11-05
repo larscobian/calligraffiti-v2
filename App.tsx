@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import ImageGallery from './components/ImageGallery';
 import Modal from './components/Modal';
@@ -15,6 +16,7 @@ declare global {
     gapi: any;
     google: any;
     tokenClient: any;
+    JSZip: any;
   }
 }
 
@@ -38,6 +40,17 @@ const sortCategories = (categories: Category[]): Category[] => {
     }
     return a.title.localeCompare(b.title); // Neither is in list, sort alphabetically
   });
+};
+
+const slugify = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '');            // Trim - from end of text
 };
 
 
@@ -169,38 +182,73 @@ const App: React.FC = () => {
     }
   }, []);
   
-const handlePublishChanges = () => {
+const handlePublishChanges = async () => {
     if (categories.length === 0) {
         alert("No hay nada que publicar. Añade algunas imágenes primero.");
         return;
     }
 
-    setLoadingMessage('Generando datos para publicación...');
+    setLoadingMessage('Preparando archivos para publicar...');
     setIsLoading(true);
     
     try {
-        const publicData = categories.map(category => ({
-            id: category.id,
-            title: category.title,
-            images: category.images.map(image => ({
-                id: image.id,
-                src: image.src, // This is the Google Drive thumbnailLink
-                alt: image.alt,
-                rotation: image.rotation,
-                crop: image.crop,
-            }))
-        }));
+        const zip = new window.JSZip();
+        const imagesFolder = zip.folder("images");
+        const publicData: Category[] = [];
+        let imageCount = 0;
+        const totalImages = categories.reduce((acc, cat) => acc + cat.images.length, 0);
 
-        const blob = new Blob([JSON.stringify(publicData, null, 2)], { type: 'application/json' });
+        for (const category of categories) {
+            const categorySlug = slugify(category.title);
+            const categoryFolder = imagesFolder.folder(categorySlug);
+            
+            const newImages: Image[] = [];
+
+            for (const image of category.images) {
+                imageCount++;
+                setLoadingMessage(`Descargando imagen ${imageCount} de ${totalImages}...`);
+                
+                try {
+                    const response = await fetch(image.src);
+                    if (!response.ok) throw new Error(`Failed to fetch ${image.src}`);
+                    const blob = await response.blob();
+                    
+                    // Sanitize filename
+                    const sanitizedFilename = image.alt.replace(/[^\w.\-]/g, '_');
+                    
+                    categoryFolder.file(sanitizedFilename, blob);
+                    
+                    const newImage: Image = {
+                        ...image,
+                        src: `images/${categorySlug}/${sanitizedFilename}`
+                    };
+                    newImages.push(newImage);
+                } catch (fetchError) {
+                    console.error(`Could not download image ${image.alt}:`, fetchError);
+                    // Optionally skip this image or add a placeholder
+                }
+            }
+
+            publicData.push({
+                ...category,
+                images: newImages,
+            });
+        }
+
+        setLoadingMessage('Generando archivo ZIP...');
+        zip.file("portfolio.json", JSON.stringify(publicData, null, 2));
+
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'portfolio.json';
+        a.href = URL.createObjectURL(zipBlob);
+        a.download = 'portfolio.zip';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(a.href);
 
-        alert("¡Datos generados! Sube el archivo 'portfolio.json' descargado a la carpeta 'public' de tu proyecto y despliega los cambios.");
+        alert("¡Archivo 'portfolio.zip' generado!\n\nINSTRUCCIONES:\n1. Descomprime el archivo.\n2. Copia la carpeta 'images' y el archivo 'portfolio.json'.\n3. Pégalos en la carpeta 'public' de tu proyecto, reemplazando los existentes.\n4. Despliega (deploy) tu aplicación para ver los cambios.");
 
     } catch (err: any) {
         console.error("Error durante la publicación:", err);
