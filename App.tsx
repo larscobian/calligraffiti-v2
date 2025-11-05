@@ -142,13 +142,14 @@ const App: React.FC = () => {
           setLoadingMessage(`Cargando imágenes para ${categoryFolder.name}...`);
           const imagesRes = await window.gapi.client.drive.files.list({
             q: `'${categoryFolder.id}' in parents and mimeType contains 'image/' and trashed=false`,
-            fields: 'files(id, name)',
+            fields: 'files(id, name, thumbnailLink)',
           });
 
           const images: Image[] = (imagesRes.result.files || []).map(file => ({
             id: file.id,
-            // Construct a permanent, high-quality public URL
-            src: `https://drive.google.com/uc?export=view&id=${file.id}`,
+            // Use the high-res thumbnail link if available, it's more reliable for embedding.
+            // Replace the size parameter to get a larger image (e.g., 800px).
+            src: file.thumbnailLink ? file.thumbnailLink.replace(/=s\d+$/, '=s800') : `https://drive.google.com/uc?export=view&id=${file.id}`,
             alt: file.name,
             rotation: 0
           }));
