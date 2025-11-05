@@ -355,7 +355,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
              const isActive = realIndex === activeIndex;
              const classNames = [
                  'gallery-image-item',
-                 'relative flex-shrink-0 w-72 md:w-80 rounded-lg overflow-hidden shadow-lg shadow-black/50 cursor-pointer group',
+                 'relative flex-shrink-0 w-72 md:w-80 rounded-2xl overflow-hidden shadow-lg shadow-black/50 cursor-pointer group',
                  'mr-[-108px] md:mr-[-120px]',
                  isMobile ? 'mobile-transform' : '',
                  isMobile && isActive ? 'is-active' : ''

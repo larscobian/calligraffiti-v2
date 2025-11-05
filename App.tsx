@@ -442,14 +442,11 @@ const handlePublishChanges = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-200 font-sans flex flex-col">
-       <header className="py-4 px-4 sm:px-6 lg:px-8">
+       <header className="pt-6 pb-2 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto text-center relative">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent">
-            Calligraffiti Lars
+            Ideas Calligraffiti
           </h1>
-          <p className="mt-2 text-lg text-gray-400">
-            Ideas y Referencias para tu decoración
-          </p>
           {!isEditMode && (
             <button 
                 onClick={handleEnterEditMode}
@@ -461,7 +458,7 @@ const handlePublishChanges = () => {
           )}
         </div>
       </header>
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-grow w-full flex flex-col items-center justify-center">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pb-4 flex-grow w-full flex flex-col items-center justify-center">
         {renderContent()}
       </main>
       
