@@ -13,6 +13,7 @@ declare global {
     gapi: any;
     google: any;
     tokenClient: any;
+    JSZip: any;
   }
 }
 
@@ -142,14 +143,13 @@ const App: React.FC = () => {
           setLoadingMessage(`Cargando imágenes para ${categoryFolder.name}...`);
           const imagesRes = await window.gapi.client.drive.files.list({
             q: `'${categoryFolder.id}' in parents and mimeType contains 'image/' and trashed=false`,
-            fields: 'files(id, name, thumbnailLink)',
+            fields: 'files(id, name)',
           });
 
           const images: Image[] = (imagesRes.result.files || []).map(file => ({
             id: file.id,
-            // Use the high-res thumbnail link if available, it's more reliable for embedding.
-            // Replace the size parameter to get a larger image (e.g., 800px).
-            src: file.thumbnailLink ? file.thumbnailLink.replace(/=s\d+$/, '=s800') : `https://drive.google.com/uc?export=view&id=${file.id}`,
+            // This is a permanent, direct-serving URL format for publicly shared files.
+            src: `https://drive.google.com/uc?id=${file.id}`,
             alt: file.name,
             rotation: 0
           }));
@@ -171,34 +171,73 @@ const App: React.FC = () => {
   
 const handlePublishChanges = async () => {
     if (categories.length === 0) {
-        alert("No hay nada que publicar. Añade algunas imágenes primero.");
+        alert("No hay nada que publicar. El portafolio está vacío.");
+        return;
+    }
+    if (!window.JSZip) {
+        alert("La librería de compresión (JSZip) no está disponible. No se puede continuar.");
         return;
     }
 
-    setLoadingMessage('Generando archivo de portafolio...');
     setIsLoading(true);
+    const zip = new window.JSZip();
+    const publicFolder = zip.folder('public');
+    const imagesFolder = publicFolder.folder('images');
+    
+    // Create a clean, sorted version of the data for publication.
+    const publicData = JSON.parse(JSON.stringify(categories));
+    const sortedPublicData = sortCategories(publicData);
+    
+    const sanitizeFilename = (name: string) => name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
     
     try {
-        // Create a clean, sorted version of the data for publication.
-        const publicData = JSON.parse(JSON.stringify(categories));
-        const sortedPublicData = sortCategories(publicData);
+        for (const category of sortedPublicData) {
+            const categoryFolderName = sanitizeFilename(category.title);
+            const categoryZipFolder = imagesFolder.folder(categoryFolderName);
+            
+            setLoadingMessage(`Procesando categoría: ${category.title}...`);
+            
+            for (const image of category.images) {
+                 try {
+                    setLoadingMessage(`Descargando: ${image.alt}...`);
+                    const res = await window.gapi.client.drive.files.get({
+                        fileId: image.id,
+                        alt: 'media'
+                    });
+                    
+                    const cleanImageName = sanitizeFilename(image.alt.split('.').slice(0, -1).join('.') || image.id) + `.${image.alt.split('.').pop() || 'jpg'}`;
+                    const imagePath = `/images/${categoryFolderName}/${cleanImageName}`;
+                    
+                    categoryZipFolder.file(cleanImageName, res.body, { binary: true });
+                    image.src = imagePath; // Update src to the new local path
 
+                } catch (downloadError) {
+                    console.error(`Failed to download image ${image.alt} (${image.id}):`, downloadError);
+                    alert(`Error al descargar la imagen "${image.alt}". ¿Quizás no es pública? Se omitirá del archivo final.`);
+                }
+            }
+        }
+
+        setLoadingMessage('Generando archivo de portafolio...');
         const jsonString = JSON.stringify(sortedPublicData, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
+        publicFolder.file('portfolio.json', jsonString);
+        
+        setLoadingMessage('Comprimiendo archivos...');
+        const content = await zip.generateAsync({ type: 'blob' });
         
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'portfolio.json';
+        a.href = URL.createObjectURL(content);
+        a.download = 'portfolio.zip';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(a.href);
 
-        alert("¡Archivo 'portfolio.json' generado!\n\nINSTRUCCIONES:\n1. Copia el archivo descargado.\n2. Pégalo en la carpeta 'public' de tu proyecto, reemplazando el existente.\n3. Despliega (deploy) tu aplicación para ver los cambios.");
+        alert("¡Archivo 'portfolio.zip' generado!\n\nINSTRUCCIONES:\n1. Descomprime el archivo descargado.\n2. Verás una carpeta 'public' dentro.\n3. Arrastra y reemplaza la carpeta 'public' de tu proyecto con esta nueva carpeta.\n4. Despliega (deploy) tu aplicación para ver los cambios.");
 
     } catch (err: any) {
         console.error("Error durante la publicación:", err);
-        alert(`Ocurrió un error al generar el archivo JSON: ${err.message}`);
+        alert(`Ocurrió un error al generar el archivo ZIP: ${err.message}`);
     } finally {
         setIsLoading(false);
         setLoadingMessage('');
