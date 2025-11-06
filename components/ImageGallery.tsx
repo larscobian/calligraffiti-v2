@@ -327,15 +327,19 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
 
   return (
     <section aria-labelledby={`gallery-title-${category.id}`} className="w-full py-4">
-      <div className="relative text-center mb-2"> {/* Added mb-2 to maintain spacing */}
+      <div className="text-center mb-2">
         <h2 id={`gallery-title-${category.id}`} className="text-2xl font-bold bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent tracking-wide inline-block">
           {category.title}
         </h2>
-        <span className="text-xs text-gray-400 ml-2">ver todo</span>
+        <div className="mt-1">
+          <span className="text-xs text-gray-400 hover:text-gray-300 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 focus:rounded">
+            ver todo
+          </span>
+        </div>
         {isEditMode && (
           <button
             onClick={onAddImages}
-            className="absolute top-1/2 -translate-y-1/2 right-0 flex items-center justify-center p-2 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-500 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500"
+            className="absolute top-1/2 -translate-y-1/2 right-0 mt-6 flex items-center justify-center p-2 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-500 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500"
             aria-label={`Añadir fotos a ${category.title}`}
           >
             <UploadIcon />
