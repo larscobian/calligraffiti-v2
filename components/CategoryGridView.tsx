@@ -15,8 +15,6 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
 }) => {
   const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'desktop' | 'large'>('desktop');
   const [isVisible, setIsVisible] = useState(false);
-  const scrollPositionRef = useRef<number>(0);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Función para volver con animación
   const handleBack = useCallback(() => {
@@ -26,8 +24,11 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
     }, 200);
   }, [onBackToMain]);
 
-  // Animación de entrada
+  // Animación de entrada + scroll a inicio
   useEffect(() => {
+    // Scroll al inicio SIEMPRE que se entra a CategoryGridView
+    window.scrollTo({ top: 0, behavior: 'auto' });
+
     requestAnimationFrame(() => {
       setIsVisible(true);
     });
@@ -54,28 +55,6 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
       }
     };
   }, [handleBack]);
-
-  // Preservar posición de scroll
-  useEffect(() => {
-    const savedScrollPosition = sessionStorage.getItem(`scroll_${category.id}`);
-    if (savedScrollPosition && containerRef.current) {
-      containerRef.current.scrollTop = parseInt(savedScrollPosition, 10);
-    }
-
-    const handleScroll = () => {
-      if (containerRef.current) {
-        scrollPositionRef.current = containerRef.current.scrollTop;
-        sessionStorage.setItem(`scroll_${category.id}`, String(scrollPositionRef.current));
-      }
-    };
-
-    const container = containerRef.current;
-    container?.addEventListener('scroll', handleScroll);
-
-    return () => {
-      container?.removeEventListener('scroll', handleScroll);
-    };
-  }, [category.id]);
 
   const updateScreenSize = useCallback(() => {
     const width = window.innerWidth;
@@ -113,7 +92,6 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
 
   return (
     <div
-      ref={containerRef}
       className={`w-full transition-all duration-300 ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}

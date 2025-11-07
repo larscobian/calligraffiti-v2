@@ -244,7 +244,7 @@ const Modal: React.FC<ModalProps> = ({ image, onClose, onNext, onPrev, currentIn
             onPrev();
             resetZoom();
           }}
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[210] p-3 text-white bg-black bg-opacity-40 rounded-full hover:bg-opacity-60 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 backdrop-blur-sm"
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[210] p-2 sm:p-3 text-white bg-transparent sm:bg-black sm:bg-opacity-40 rounded-full hover:bg-opacity-20 sm:hover:bg-opacity-60 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 sm:backdrop-blur-sm"
           aria-label="Imagen anterior"
         >
           <ChevronLeftIcon />
@@ -282,7 +282,7 @@ const Modal: React.FC<ModalProps> = ({ image, onClose, onNext, onPrev, currentIn
             onNext();
             resetZoom();
           }}
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[210] p-3 text-white bg-black bg-opacity-40 rounded-full hover:bg-opacity-60 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 backdrop-blur-sm"
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[210] p-2 sm:p-3 text-white bg-transparent sm:bg-black sm:bg-opacity-40 rounded-full hover:bg-opacity-20 sm:hover:bg-opacity-60 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 sm:backdrop-blur-sm"
           aria-label="Siguiente imagen"
         >
           <ChevronRightIcon />

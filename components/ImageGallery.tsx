@@ -118,35 +118,35 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   }, [getItems, IS_PERSPECTIVE, CLONE_COUNT, category.images.length, isMobile]);
 
   const handleInfiniteJump = useCallback(() => {
-    if (!IS_INFINITE || isJumpingRef.current) return;
+    if (!IS_INFINITE || isJumpingRef.current || isNavigatingRef.current) return;
 
     const container = scrollContainerRef.current;
     const items = getItems();
     if (!container || items.length < 2) return;
-    
+
     const itemWidth = (items[0] as HTMLElement).offsetWidth;
     const itemMargin = -parseInt(window.getComputedStyle(items[0]).marginRight);
     const totalItemWidth = itemWidth - itemMargin;
-    
+
     if (container.scrollLeft < totalItemWidth * (CLONE_COUNT - 0.5)) {
         isJumpingRef.current = true;
         container.style.scrollBehavior = 'auto';
         container.scrollLeft += category.images.length * totalItemWidth;
         container.getBoundingClientRect(); // Force style recalculation
         container.style.scrollBehavior = 'smooth';
-        setTimeout(() => { 
+        setTimeout(() => {
           isJumpingRef.current = false;
           if (!isMobile) handleScrollEffects();
         }, 50);
-    } 
+    }
     else if (container.scrollLeft > totalItemWidth * (category.images.length + CLONE_COUNT - 1.5)) {
         isJumpingRef.current = true;
         container.style.scrollBehavior = 'auto';
         container.scrollLeft -= category.images.length * totalItemWidth;
         container.getBoundingClientRect(); // Force style recalculation
         container.style.scrollBehavior = 'smooth';
-        setTimeout(() => { 
-          isJumpingRef.current = false; 
+        setTimeout(() => {
+          isJumpingRef.current = false;
           if (!isMobile) handleScrollEffects();
         }, 50);
     }
@@ -199,10 +199,10 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     scrollTimeoutRef.current = window.setTimeout(() => {
         if (!isNavigatingRef.current) {
           handleInfiniteJump();
-          snapToCenter();
+          // No usar snapToCenter automáticamente, causa conflictos con navegación
         }
-    }, 200);
-  }, [handleScrollEffects, handleInfiniteJump, snapToCenter, isMobile]);
+    }, 150);
+  }, [handleScrollEffects, handleInfiniteJump, isMobile]);
   
   // DESKTOP: Use JS-driven scroll effects
   useEffect(() => {
@@ -275,21 +275,23 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const timer = setTimeout(() => {
-      const items = getItems();
-      if (items.length === 0) return;
+    const items = getItems();
+    if (items.length === 0) return;
 
-      const indexToCenter = IS_INFINITE ? CLONE_COUNT : 0;
-      const targetElement = items[indexToCenter] as HTMLElement;
+    const indexToCenter = IS_INFINITE ? CLONE_COUNT : 0;
+    const targetElement = items[indexToCenter] as HTMLElement;
 
-      if (targetElement) {
-        const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
-        container.scrollLeft = newScrollLeft;
-        if (!isMobile) handleScrollEffects();
+    if (targetElement) {
+      const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
+      container.style.scrollBehavior = 'auto';
+      container.scrollLeft = newScrollLeft;
+      container.style.scrollBehavior = '';
+
+      // Aplicar efectos inmediatamente
+      if (!isMobile) {
+        requestAnimationFrame(() => handleScrollEffects());
       }
-    }, 50);
-
-    return () => clearTimeout(timer);
+    }
   }, [IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects, category.id, extendedImages.length, isMobile]);
 
   useEffect(() => {
@@ -337,22 +339,35 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   const handleDotClick = (index: number) => {
     const container = scrollContainerRef.current;
     const items = getItems();
-    if (!container || items.length === 0) return;
+    if (!container || items.length === 0 || isNavigatingRef.current) return;
 
     // Marcar que estamos navegando manualmente
     isNavigatingRef.current = true;
+    isJumpingRef.current = true;
 
     const targetIndex = IS_INFINITE ? index + CLONE_COUNT : index;
     const targetElement = items[targetIndex] as HTMLElement;
     if(targetElement) {
         const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
-        container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
 
-        // Resetear la flag después de la animación
+        // Scroll instantáneo sin behavior smooth para evitar conflictos
+        container.style.scrollBehavior = 'auto';
+        container.scrollLeft = newScrollLeft;
+
+        // Forzar reflow
+        void container.offsetHeight;
+
+        container.style.scrollBehavior = 'smooth';
+
+        // Actualizar el estado inmediatamente
+        setActiveIndex(index);
+
+        // Resetear las flags después de la animación
         setTimeout(() => {
           isNavigatingRef.current = false;
+          isJumpingRef.current = false;
           if (!isMobile) handleScrollEffects();
-        }, 500);
+        }, 100);
     }
   };
 
