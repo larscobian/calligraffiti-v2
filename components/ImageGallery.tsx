@@ -21,18 +21,28 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   const rafIdRef = useRef<number | null>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
+  const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
 
   useEffect(() => {
-    const checkIsMobile = () => setIsMobile(window.innerWidth < 768);
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    return () => window.removeEventListener('resize', checkIsMobile);
+    const checkDeviceType = () => {
+      const width = window.innerWidth;
+      if (width < 768) {
+        setDeviceType('mobile');
+      } else if (width < 1024) {
+        setDeviceType('tablet');
+      } else {
+        setDeviceType('desktop');
+      }
+    };
+    checkDeviceType();
+    window.addEventListener('resize', checkDeviceType);
+    return () => window.removeEventListener('resize', checkDeviceType);
   }, []);
 
+  const isMobile = deviceType === 'mobile';
   const IS_INFINITE = category.images.length > 3;
   // Disable perspective on mobile for performance
-  const IS_PERSPECTIVE = !isMobile;
+  const IS_PERSPECTIVE = deviceType === 'desktop';
   const CLONE_COUNT = IS_INFINITE ? Math.min(3, category.images.length) : 0;
 
   const extendedImages = useMemo(() => {
@@ -81,28 +91,31 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       const zIndex = Math.round(150 - absDistance / 5);
       el.style.zIndex = String(zIndex);
 
-      // Solo aplicar transformaciones complejas en desktop
-      if (!isMobile) {
+      // Aplicar transformaciones según dispositivo
+      if (deviceType === 'desktop') {
+        // Desktop: efectos 3D completos con semi-transparencia para superposición suave
         const scale = Math.max(0.8, 1 - absDistance / (containerWidth * 1.2));
-        const opacity = Math.max(0.3, 1 - absDistance / containerWidth);
-        let transform = `scale(${scale})`;
+        const opacity = Math.max(0.5, 1 - absDistance / (containerWidth * 0.8)); // Mayor opacidad para superposición
+        const rotationY = (distanceFromCenter / (containerWidth / 2)) * -20;
+        const translateX = distanceFromCenter / 3.5;
+        const transform = `translateX(${translateX}px) rotateY(${rotationY}deg) scale(${scale})`;
 
-        if (IS_PERSPECTIVE) {
-          const rotationY = (distanceFromCenter / (containerWidth / 2)) * -20;
-          const translateX = distanceFromCenter / 3.5;
-          transform = `translateX(${translateX}px) rotateY(${rotationY}deg) scale(${scale})`;
-        } else {
-          const rotationZ = (distanceFromCenter / containerWidth) * 4;
-          const translateY = absDistance / 15;
-          transform = `translateY(${translateY}px) rotate(${rotationZ}deg) scale(${scale})`;
-        }
+        el.style.transform = transform;
+        el.style.opacity = `${opacity}`;
+      } else if (deviceType === 'tablet') {
+        // Tablet: efectos intermedios sin rotación 3D pero con escala y semi-transparencia
+        const scale = Math.max(0.85, 1 - absDistance / (containerWidth * 1.5));
+        const opacity = Math.max(0.6, 1 - absDistance / (containerWidth * 0.9)); // Semi-transparencia
+        const rotationZ = (distanceFromCenter / containerWidth) * 3;
+        const translateY = absDistance / 20;
+        const transform = `translateY(${translateY}px) rotate(${rotationZ}deg) scale(${scale})`;
 
         el.style.transform = transform;
         el.style.opacity = `${opacity}`;
       } else {
-        // En móvil, solo aplicar escala sutil y opacity
+        // Móvil: efectos sutiles con semi-transparencia
         const scale = absDistance < containerWidth / 3 ? 1 : 0.95;
-        const opacity = absDistance < containerWidth / 2 ? 1 : 0.7;
+        const opacity = absDistance < containerWidth / 2 ? 1 : 0.75; // Más opacidad para superposición
         el.style.transform = `scale(${scale})`;
         el.style.opacity = `${opacity}`;
       }
@@ -115,14 +128,11 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         centeredEl.style.zIndex = `200`;
         centeredEl.style.opacity = `1`;
 
-        if (!isMobile) {
-          let centeredTransform = 'scale(1.05)';
-          if (IS_PERSPECTIVE) {
-            centeredTransform = 'rotateY(0deg) scale(1.05)';
-          } else {
-            centeredTransform = 'translateY(0) rotate(0) scale(1.05)';
-          }
-          centeredEl.style.transform = centeredTransform;
+        // Aplicar transformación según dispositivo
+        if (deviceType === 'desktop') {
+          centeredEl.style.transform = 'rotateY(0deg) scale(1.05)';
+        } else if (deviceType === 'tablet') {
+          centeredEl.style.transform = 'translateY(0) rotate(0) scale(1.02)';
         } else {
           centeredEl.style.transform = 'scale(1)';
         }
@@ -439,31 +449,17 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         </div>
         {IS_INFINITE && (
           <>
+            {/* Botones de navegación - Siempre visibles en todos los dispositivos */}
             <button
               onClick={handlePrevClick}
-              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[102] p-2 text-white bg-black bg-opacity-20 rounded-full hover:bg-opacity-50 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 opacity-0 group-hover:opacity-100 hidden md:flex"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[102] p-2 sm:p-3 text-white bg-black bg-opacity-30 rounded-full hover:bg-opacity-60 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 opacity-80 hover:opacity-100 backdrop-blur-sm"
               aria-label="Imagen anterior"
             >
               <ChevronLeftIcon />
             </button>
             <button
               onClick={handleNextClick}
-              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[102] p-2 text-white bg-black bg-opacity-20 rounded-full hover:bg-opacity-50 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 opacity-0 group-hover:opacity-100 hidden md:flex"
-              aria-label="Siguiente imagen"
-            >
-              <ChevronRightIcon />
-            </button>
-            {/* Mobile Navigation Buttons - Always visible on mobile */}
-            <button
-              onClick={handlePrevClick}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-[102] p-2 text-white bg-transparent rounded-full hover:bg-opacity-20 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 md:hidden opacity-70 hover:opacity-100"
-              aria-label="Imagen anterior"
-            >
-              <ChevronLeftIcon />
-            </button>
-            <button
-              onClick={handleNextClick}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-[102] p-2 text-white bg-transparent rounded-full hover:bg-opacity-20 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 md:hidden opacity-70 hover:opacity-100"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[102] p-2 sm:p-3 text-white bg-black bg-opacity-30 rounded-full hover:bg-opacity-60 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 opacity-80 hover:opacity-100 backdrop-blur-sm"
               aria-label="Siguiente imagen"
             >
               <ChevronRightIcon />

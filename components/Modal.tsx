@@ -250,18 +250,32 @@ const Modal: React.FC<ModalProps> = ({ image, onClose, onNext, onPrev, currentIn
           <ChevronLeftIcon />
         </button>
 
-        {/* Image Container */}
+        {/* Image Container - Siempre formato 3:4 */}
         <div
-          className="relative max-h-[85vh] max-w-[90vw] aspect-[3/4] bg-black/30 rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center"
+          className="relative w-[min(90vw,calc(85vh*3/4))] h-[min(85vh,calc(90vw*4/3))] aspect-[3/4] rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          style={{
+            backgroundColor: '#000',
+          }}
         >
+          {/* Fondo difuminado de la imagen */}
+          <div
+            className="absolute inset-0 opacity-30 blur-2xl scale-110"
+            style={{
+              backgroundImage: `url(${image.src})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+
+          {/* Imagen principal centrada */}
           <img
             ref={imageRef}
             src={image.src}
             alt={image.alt}
-            className="max-w-full max-h-full object-contain cursor-zoom-in select-none"
+            className="relative z-10 max-w-full max-h-full object-contain cursor-zoom-in select-none"
             style={{
               transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
               transition: touchStart ? 'none' : 'transform 0.3s ease-out',
