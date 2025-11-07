@@ -8,10 +8,11 @@ interface ImageGalleryProps {
   onImageClick: (image: Image, gallery: Image[]) => void;
   onDeleteImage: (categoryId: string, imageId: string) => void;
   onEditImage: (category: Category, image: Image) => void;
+  onViewAllClick: () => void;
   isEditMode: boolean;
 }
 
-const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onImageClick, onDeleteImage, onEditImage, isEditMode }) => {
+const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onImageClick, onDeleteImage, onEditImage, onViewAllClick, isEditMode }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const galleryContainerRef = useRef<HTMLDivElement>(null);
   const isJumpingRef = useRef(false);
@@ -332,7 +333,14 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
           {category.title}
         </h2>
         <div className="mt-1">
-          <span className="text-xs text-gray-400 hover:text-gray-300 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 focus:rounded">
+          <span 
+            className="text-xs text-gray-400 hover:text-gray-300 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 focus:rounded"
+            onClick={onViewAllClick}
+            onKeyPress={(e) => e.key === 'Enter' && onViewAllClick()}
+            tabIndex={0}
+            role="button"
+            aria-label={`Ver todas las imágenes de ${category.title}`}
+          >
             ver todo
           </span>
         </div>

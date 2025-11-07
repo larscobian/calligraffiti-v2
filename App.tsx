@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ImageGallery from './components/ImageGallery';
+import CategoryGridView from './components/CategoryGridView';
 import Modal from './components/Modal';
 import { SettingsIcon, EyeIcon, DownloadIcon } from './components/icons';
 import { Category, Image } from './types';
@@ -181,6 +182,8 @@ const App: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState('Cargando catálogo...');
   const [isEditMode] = useState(() => new URLSearchParams(window.location.search).get('admin') === 'true');
   const [modalState, setModalState] = useState<{ image: Image; gallery: Image[] } | null>(null);
+  const [currentView, setCurrentView] = useState<'main' | 'category'>('main');
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   
   useEffect(() => {
     if (isEditMode) {
@@ -234,6 +237,16 @@ const App: React.FC = () => {
     const prevIndex = (currentIndex - 1 + gallery.length) % gallery.length;
     handleImageClick(gallery[prevIndex], gallery);
   };
+
+  const handleViewAllClick = (category: Category) => {
+    setSelectedCategory(category);
+    setCurrentView('category');
+  };
+
+  const handleBackToMain = () => {
+    setCurrentView('main');
+    setSelectedCategory(null);
+  };
   
   const handleEnterEditMode = () => {
     window.location.search = 'admin=true';
@@ -266,6 +279,16 @@ const App: React.FC = () => {
       );
     }
 
+    if (currentView === 'category' && selectedCategory) {
+      return (
+        <CategoryGridView
+          category={selectedCategory}
+          onBackToMain={handleBackToMain}
+          onImageClick={handleImageClick}
+        />
+      );
+    }
+
     return (
        <div className="w-full">
           {categories.map(category => (
@@ -273,6 +296,7 @@ const App: React.FC = () => {
               key={category.id}
               category={category}
               onImageClick={handleImageClick}
+              onViewAllClick={() => handleViewAllClick(category)}
               // Admin-related props are no longer needed for public view
               isEditMode={false}
               onAddImages={() => {}}
