@@ -4,12 +4,6 @@
     "title": "Murales Completos",
     "images": [
       {
-        "id": "images (2).jpeg",
-        "src": "/images/murales-completos/images (2).jpeg",
-        "alt": "images (2).jpeg",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_124519.jpg",
         "src": "/images/murales-completos/IMG_20251104_124519.jpg",
         "alt": "IMG_20251104_124519.jpg",
@@ -22,21 +16,9 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_130632.jpg",
-        "src": "/images/murales-completos/IMG_20251104_130632.jpg",
-        "alt": "IMG_20251104_130632.jpg",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_150421.jpg",
         "src": "/images/murales-completos/IMG_20251104_150421.jpg",
         "alt": "IMG_20251104_150421.jpg",
-        "rotation": 0
-      },
-      {
-        "id": "IMG_20251104_132548.jpg",
-        "src": "/images/murales-completos/IMG_20251104_132548.jpg",
-        "alt": "IMG_20251104_132548.jpg",
         "rotation": 0
       },
       {
@@ -52,6 +34,12 @@
         "rotation": 0
       },
       {
+        "id": "IMG_20251104_152613.jpg",
+        "src": "/images/murales-completos/IMG_20251104_152613.jpg",
+        "alt": "IMG_20251104_152613.jpg",
+        "rotation": 0
+      },
+      {
         "id": "IMG_20251104_152840.jpg",
         "src": "/images/murales-completos/IMG_20251104_152840.jpg",
         "alt": "IMG_20251104_152840.jpg",
@@ -64,27 +52,15 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_154918.png",
-        "src": "/images/murales-completos/IMG_20251104_154918.png",
-        "alt": "IMG_20251104_154918.png",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_153956.jpg",
         "src": "/images/murales-completos/IMG_20251104_153956.jpg",
         "alt": "IMG_20251104_153956.jpg",
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_152613.jpg",
-        "src": "/images/murales-completos/IMG_20251104_152613.jpg",
-        "alt": "IMG_20251104_152613.jpg",
-        "rotation": 0
-      },
-      {
-        "id": "IMG_20251104_155654.jpg",
-        "src": "/images/murales-completos/IMG_20251104_155654.jpg",
-        "alt": "IMG_20251104_155654.jpg",
+        "id": "IMG_20251104_154918.png",
+        "src": "/images/murales-completos/IMG_20251104_154918.png",
+        "alt": "IMG_20251104_154918.png",
         "rotation": 0
       },
       {
@@ -100,15 +76,15 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_161333.jpg",
-        "src": "/images/murales-completos/IMG_20251104_161333.jpg",
-        "alt": "IMG_20251104_161333.jpg",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_160958.jpg",
         "src": "/images/murales-completos/IMG_20251104_160958.jpg",
         "alt": "IMG_20251104_160958.jpg",
+        "rotation": 0
+      },
+      {
+        "id": "IMG_20251104_161333.jpg",
+        "src": "/images/murales-completos/IMG_20251104_161333.jpg",
+        "alt": "IMG_20251104_161333.jpg",
         "rotation": 0
       },
       {
@@ -148,9 +124,9 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_131817.jpg",
-        "src": "/images/murales-simples/IMG_20251104_131817.jpg",
-        "alt": "IMG_20251104_131817.jpg",
+        "id": "IMG_20251104_131200.jpg",
+        "src": "/images/murales-simples/IMG_20251104_131200.jpg",
+        "alt": "IMG_20251104_131200.jpg",
         "rotation": 0
       },
       {
@@ -160,9 +136,9 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_131200.jpg",
-        "src": "/images/murales-simples/IMG_20251104_131200.jpg",
-        "alt": "IMG_20251104_131200.jpg",
+        "id": "IMG_20251104_131817.jpg",
+        "src": "/images/murales-simples/IMG_20251104_131817.jpg",
+        "alt": "IMG_20251104_131817.jpg",
         "rotation": 0
       },
       {
@@ -196,15 +172,15 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_165656.jpg",
-        "src": "/images/murales-simples/IMG_20251104_165656.jpg",
-        "alt": "IMG_20251104_165656.jpg",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_164148.jpg",
         "src": "/images/murales-simples/IMG_20251104_164148.jpg",
         "alt": "IMG_20251104_164148.jpg",
+        "rotation": 0
+      },
+      {
+        "id": "IMG_20251104_165656.jpg",
+        "src": "/images/murales-simples/IMG_20251104_165656.jpg",
+        "alt": "IMG_20251104_165656.jpg",
         "rotation": 0
       },
       {
@@ -224,12 +200,6 @@
         "src": "/images/murales-simples/IMG_20251104_184735.jpg",
         "alt": "IMG_20251104_184735.jpg",
         "rotation": 0
-      },
-      {
-        "id": "service_1724182738599.jpg",
-        "src": "/images/murales-simples/service_1724182738599.jpg",
-        "alt": "service_1724182738599.jpg",
-        "rotation": 0
       }
     ]
   },
@@ -237,18 +207,6 @@
     "id": ".Cuadros y Relojes",
     "title": "Cuadros y Relojes",
     "images": [
-      {
-        "id": "IMG_20251104_131723.jpg",
-        "src": "/images/cuadros-y-relojes/IMG_20251104_131723.jpg",
-        "alt": "IMG_20251104_131723.jpg",
-        "rotation": 0
-      },
-      {
-        "id": "155573d4b6641f0850883aa545366ef0.jpg",
-        "src": "/images/cuadros-y-relojes/155573d4b6641f0850883aa545366ef0.jpg",
-        "alt": "155573d4b6641f0850883aa545366ef0.jpg",
-        "rotation": 0
-      },
       {
         "id": "IMG_20251104_130738.jpg",
         "src": "/images/cuadros-y-relojes/IMG_20251104_130738.jpg",
@@ -259,6 +217,12 @@
         "id": "IMG_20251104_130832.jpg",
         "src": "/images/cuadros-y-relojes/IMG_20251104_130832.jpg",
         "alt": "IMG_20251104_130832.jpg",
+        "rotation": 0
+      },
+      {
+        "id": "IMG_20251104_131723.jpg",
+        "src": "/images/cuadros-y-relojes/IMG_20251104_131723.jpg",
+        "alt": "IMG_20251104_131723.jpg",
         "rotation": 0
       },
       {
@@ -274,21 +238,15 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_133152.jpg",
-        "src": "/images/cuadros-y-relojes/IMG_20251104_133152.jpg",
-        "alt": "IMG_20251104_133152.jpg",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_132958.jpg",
         "src": "/images/cuadros-y-relojes/IMG_20251104_132958.jpg",
         "alt": "IMG_20251104_132958.jpg",
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_133807.jpg",
-        "src": "/images/cuadros-y-relojes/IMG_20251104_133807.jpg",
-        "alt": "IMG_20251104_133807.jpg",
+        "id": "IMG_20251104_133152.jpg",
+        "src": "/images/cuadros-y-relojes/IMG_20251104_133152.jpg",
+        "alt": "IMG_20251104_133152.jpg",
         "rotation": 0
       },
       {
@@ -298,9 +256,27 @@
         "rotation": 0
       },
       {
+        "id": "IMG_20251104_133807.jpg",
+        "src": "/images/cuadros-y-relojes/IMG_20251104_133807.jpg",
+        "alt": "IMG_20251104_133807.jpg",
+        "rotation": 0
+      },
+      {
         "id": "IMG_20251104_133840.jpg",
         "src": "/images/cuadros-y-relojes/IMG_20251104_133840.jpg",
         "alt": "IMG_20251104_133840.jpg",
+        "rotation": 0
+      },
+      {
+        "id": "IMG_20251104_134543.jpg",
+        "src": "/images/cuadros-y-relojes/IMG_20251104_134543.jpg",
+        "alt": "IMG_20251104_134543.jpg",
+        "rotation": 0
+      },
+      {
+        "id": "IMG_20251104_151711.jpg",
+        "src": "/images/cuadros-y-relojes/IMG_20251104_151711.jpg",
+        "alt": "IMG_20251104_151711.jpg",
         "rotation": 0
       },
       {
@@ -316,18 +292,6 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_151711.jpg",
-        "src": "/images/cuadros-y-relojes/IMG_20251104_151711.jpg",
-        "alt": "IMG_20251104_151711.jpg",
-        "rotation": 0
-      },
-      {
-        "id": "IMG_20251104_134543.jpg",
-        "src": "/images/cuadros-y-relojes/IMG_20251104_134543.jpg",
-        "alt": "IMG_20251104_134543.jpg",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_185627.jpg",
         "src": "/images/cuadros-y-relojes/IMG_20251104_185627.jpg",
         "alt": "IMG_20251104_185627.jpg",
@@ -340,15 +304,15 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_190917.jpg",
-        "src": "/images/cuadros-y-relojes/IMG_20251104_190917.jpg",
-        "alt": "IMG_20251104_190917.jpg",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_190725.jpg",
         "src": "/images/cuadros-y-relojes/IMG_20251104_190725.jpg",
         "alt": "IMG_20251104_190725.jpg",
+        "rotation": 0
+      },
+      {
+        "id": "IMG_20251104_190917.jpg",
+        "src": "/images/cuadros-y-relojes/IMG_20251104_190917.jpg",
+        "alt": "IMG_20251104_190917.jpg",
         "rotation": 0
       },
       {
@@ -376,18 +340,6 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_191826.jpg",
-        "src": "/images/cuadros-y-relojes/IMG_20251104_191826.jpg",
-        "alt": "IMG_20251104_191826.jpg",
-        "rotation": 0
-      },
-      {
-        "id": "IMG_20251104_192051.jpg",
-        "src": "/images/cuadros-y-relojes/IMG_20251104_192051.jpg",
-        "alt": "IMG_20251104_192051.jpg",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_192151.jpg",
         "src": "/images/cuadros-y-relojes/IMG_20251104_192151.jpg",
         "alt": "IMG_20251104_192151.jpg",
@@ -406,9 +358,9 @@
     "title": "Detalles - Puertas - Espejos",
     "images": [
       {
-        "id": "540704989_18525601819014730_490801433648230696_n.jpg",
-        "src": "/images/detalles-puertas-espejos/540704989_18525601819014730_490801433648230696_n.jpg",
-        "alt": "540704989_18525601819014730_490801433648230696_n.jpg",
+        "id": "IMG_20251104_124752.jpg",
+        "src": "/images/detalles-puertas-espejos/IMG_20251104_124752.jpg",
+        "alt": "IMG_20251104_124752.jpg",
         "rotation": 0
       },
       {
@@ -418,21 +370,9 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_124752.jpg",
-        "src": "/images/detalles-puertas-espejos/IMG_20251104_124752.jpg",
-        "alt": "IMG_20251104_124752.jpg",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_125311.jpg",
         "src": "/images/detalles-puertas-espejos/IMG_20251104_125311.jpg",
         "alt": "IMG_20251104_125311.jpg",
-        "rotation": 0
-      },
-      {
-        "id": "IMG_20251104_130110.jpg",
-        "src": "/images/detalles-puertas-espejos/IMG_20251104_130110.jpg",
-        "alt": "IMG_20251104_130110.jpg",
         "rotation": 0
       },
       {
@@ -442,21 +382,9 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_131723.jpg",
-        "src": "/images/detalles-puertas-espejos/IMG_20251104_131723.jpg",
-        "alt": "IMG_20251104_131723.jpg",
-        "rotation": 0
-      },
-      {
-        "id": "IMG_20251104_134629.jpg",
-        "src": "/images/detalles-puertas-espejos/IMG_20251104_134629.jpg",
-        "alt": "IMG_20251104_134629.jpg",
-        "rotation": 0
-      },
-      {
-        "id": "IMG_20251104_131448.jpg",
-        "src": "/images/detalles-puertas-espejos/IMG_20251104_131448.jpg",
-        "alt": "IMG_20251104_131448.jpg",
+        "id": "IMG_20251104_130110.jpg",
+        "src": "/images/detalles-puertas-espejos/IMG_20251104_130110.jpg",
+        "alt": "IMG_20251104_130110.jpg",
         "rotation": 0
       },
       {
@@ -466,15 +394,27 @@
         "rotation": 0
       },
       {
+        "id": "IMG_20251104_131448.jpg",
+        "src": "/images/detalles-puertas-espejos/IMG_20251104_131448.jpg",
+        "alt": "IMG_20251104_131448.jpg",
+        "rotation": 0
+      },
+      {
+        "id": "IMG_20251104_131723.jpg",
+        "src": "/images/detalles-puertas-espejos/IMG_20251104_131723.jpg",
+        "alt": "IMG_20251104_131723.jpg",
+        "rotation": 0
+      },
+      {
         "id": "IMG_20251104_134433.jpg",
         "src": "/images/detalles-puertas-espejos/IMG_20251104_134433.jpg",
         "alt": "IMG_20251104_134433.jpg",
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_155933.jpg",
-        "src": "/images/detalles-puertas-espejos/IMG_20251104_155933.jpg",
-        "alt": "IMG_20251104_155933.jpg",
+        "id": "IMG_20251104_134629.jpg",
+        "src": "/images/detalles-puertas-espejos/IMG_20251104_134629.jpg",
+        "alt": "IMG_20251104_134629.jpg",
         "rotation": 0
       },
       {
@@ -484,15 +424,21 @@
         "rotation": 0
       },
       {
-        "id": "IMG_20251104_165409.jpg",
-        "src": "/images/detalles-puertas-espejos/IMG_20251104_165409.jpg",
-        "alt": "IMG_20251104_165409.jpg",
-        "rotation": 0
-      },
-      {
         "id": "IMG_20251104_155244.jpg",
         "src": "/images/detalles-puertas-espejos/IMG_20251104_155244.jpg",
         "alt": "IMG_20251104_155244.jpg",
+        "rotation": 0
+      },
+      {
+        "id": "IMG_20251104_155933.jpg",
+        "src": "/images/detalles-puertas-espejos/IMG_20251104_155933.jpg",
+        "alt": "IMG_20251104_155933.jpg",
+        "rotation": 0
+      },
+      {
+        "id": "IMG_20251104_165409.jpg",
+        "src": "/images/detalles-puertas-espejos/IMG_20251104_165409.jpg",
+        "alt": "IMG_20251104_165409.jpg",
         "rotation": 0
       },
       {
