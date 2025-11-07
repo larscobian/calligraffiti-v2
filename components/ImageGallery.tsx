@@ -339,35 +339,57 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   const handleDotClick = (index: number) => {
     const container = scrollContainerRef.current;
     const items = getItems();
-    if (!container || items.length === 0 || isNavigatingRef.current) return;
+    if (!container || items.length === 0) return;
+
+    // Prevenir clicks múltiples solo si ya hay uno en proceso
+    if (isNavigatingRef.current) return;
 
     // Marcar que estamos navegando manualmente
     isNavigatingRef.current = true;
-    isJumpingRef.current = true;
 
     const targetIndex = IS_INFINITE ? index + CLONE_COUNT : index;
     const targetElement = items[targetIndex] as HTMLElement;
+
     if(targetElement) {
         const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
 
-        // Scroll instantáneo sin behavior smooth para evitar conflictos
-        container.style.scrollBehavior = 'auto';
-        container.scrollLeft = newScrollLeft;
+        if (!isMobile) {
+          // Desktop: scroll instantáneo + effects
+          isJumpingRef.current = true;
 
-        // Forzar reflow
-        void container.offsetHeight;
+          // Desactivar transitions durante navegación para que sea instantáneo
+          items.forEach(item => {
+            (item as HTMLElement).style.transition = 'none';
+          });
 
-        container.style.scrollBehavior = 'smooth';
+          container.style.scrollBehavior = 'auto';
+          container.scrollLeft = newScrollLeft;
+          void container.offsetHeight;
 
-        // Actualizar el estado inmediatamente
-        setActiveIndex(index);
+          // Aplicar efectos inmediatamente
+          handleScrollEffects();
+          setActiveIndex(index);
 
-        // Resetear las flags después de la animación
-        setTimeout(() => {
-          isNavigatingRef.current = false;
-          isJumpingRef.current = false;
-          if (!isMobile) handleScrollEffects();
-        }, 100);
+          // Reactivar transitions después de un frame
+          requestAnimationFrame(() => {
+            items.forEach(item => {
+              (item as HTMLElement).style.transition = '';
+            });
+            container.style.scrollBehavior = '';
+
+            setTimeout(() => {
+              isNavigatingRef.current = false;
+              isJumpingRef.current = false;
+            }, 50);
+          });
+        } else {
+          // Mobile: scroll smooth normal
+          container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+
+          setTimeout(() => {
+            isNavigatingRef.current = false;
+          }, 400);
+        }
     }
   };
 

@@ -184,6 +184,7 @@ const App: React.FC = () => {
   const [modalState, setModalState] = useState<{ image: Image; gallery: Image[] } | null>(null);
   const [currentView, setCurrentView] = useState<'main' | 'category'>('main');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const savedScrollPosition = React.useRef<number>(0);
   
   useEffect(() => {
     if (isEditMode) {
@@ -239,6 +240,8 @@ const App: React.FC = () => {
   };
 
   const handleViewAllClick = (category: Category) => {
+    // Guardar la posición actual del scroll antes de cambiar de vista
+    savedScrollPosition.current = window.scrollY;
     setSelectedCategory(category);
     setCurrentView('category');
   };
@@ -246,6 +249,11 @@ const App: React.FC = () => {
   const handleBackToMain = () => {
     setCurrentView('main');
     setSelectedCategory(null);
+
+    // Restaurar la posición del scroll después de un frame
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: savedScrollPosition.current, behavior: 'auto' });
+    });
   };
   
   const handleEnterEditMode = () => {
