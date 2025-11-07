@@ -51,13 +51,13 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   }, []);
   
   const handleScrollEffects = useCallback(() => {
-    if (isJumpingRef.current || isMobile) return;
+    if (isJumpingRef.current) return;
     const container = scrollContainerRef.current;
     if (!container) return;
 
     const items = getItems();
     if (items.length === 0) return;
-    
+
     const containerWidth = container.offsetWidth;
     const scrollCenter = container.scrollLeft + containerWidth / 2;
 
@@ -68,49 +68,66 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       const el = itemEl as HTMLDivElement;
       const imageCenter = el.offsetLeft + el.offsetWidth / 2;
       const distanceFromCenter = imageCenter - scrollCenter;
-      
+
       const absDistance = Math.abs(distanceFromCenter);
       const itemIndex = parseInt(el.dataset.index || '0', 10);
-      
+
       if (absDistance < minDistance) {
         minDistance = absDistance;
         closestIndex = itemIndex;
       }
-      
-      const scale = Math.max(0.8, 1 - absDistance / (containerWidth * 1.2));
-      const opacity = Math.max(0.3, 1 - absDistance / containerWidth);
-      const zIndex = Math.round(100 - absDistance / 10);
-      let transform = `scale(${scale})`;
 
-      if (IS_PERSPECTIVE) {
-        const rotationY = (distanceFromCenter / (containerWidth / 2)) * -20;
-        const translateX = distanceFromCenter / 3.5;
-        transform = `translateX(${translateX}px) rotateY(${rotationY}deg) scale(${scale})`;
-      } else {
-        const rotationZ = (distanceFromCenter / containerWidth) * 4;
-        const translateY = absDistance / 15;
-        transform = `translateY(${translateY}px) rotate(${rotationZ}deg) scale(${scale})`;
-      }
-      
-      el.style.transform = transform;
+      // Calcular z-index basado en la distancia - más cerca = mayor z-index
+      const zIndex = Math.round(150 - absDistance / 5);
       el.style.zIndex = String(zIndex);
-      el.style.opacity = `${opacity}`;
+
+      // Solo aplicar transformaciones complejas en desktop
+      if (!isMobile) {
+        const scale = Math.max(0.8, 1 - absDistance / (containerWidth * 1.2));
+        const opacity = Math.max(0.3, 1 - absDistance / containerWidth);
+        let transform = `scale(${scale})`;
+
+        if (IS_PERSPECTIVE) {
+          const rotationY = (distanceFromCenter / (containerWidth / 2)) * -20;
+          const translateX = distanceFromCenter / 3.5;
+          transform = `translateX(${translateX}px) rotateY(${rotationY}deg) scale(${scale})`;
+        } else {
+          const rotationZ = (distanceFromCenter / containerWidth) * 4;
+          const translateY = absDistance / 15;
+          transform = `translateY(${translateY}px) rotate(${rotationZ}deg) scale(${scale})`;
+        }
+
+        el.style.transform = transform;
+        el.style.opacity = `${opacity}`;
+      } else {
+        // En móvil, solo aplicar escala sutil y opacity
+        const scale = absDistance < containerWidth / 3 ? 1 : 0.95;
+        const opacity = absDistance < containerWidth / 2 ? 1 : 0.7;
+        el.style.transform = `scale(${scale})`;
+        el.style.opacity = `${opacity}`;
+      }
     });
-    
+
     if (closestIndex !== -1) {
       const centeredEl = items[closestIndex] as HTMLDivElement;
       if (centeredEl) {
-        let centeredTransform = 'scale(1.05)';
-        if (IS_PERSPECTIVE) {
-          centeredTransform = 'rotateY(0deg) scale(1.05)';
-        } else {
-           centeredTransform = 'translateY(0) rotate(0) scale(1.05)';
-        }
-        centeredEl.style.transform = centeredTransform;
-        centeredEl.style.zIndex = `101`;
+        // Dar el z-index más alto a la imagen centrada
+        centeredEl.style.zIndex = `200`;
         centeredEl.style.opacity = `1`;
+
+        if (!isMobile) {
+          let centeredTransform = 'scale(1.05)';
+          if (IS_PERSPECTIVE) {
+            centeredTransform = 'rotateY(0deg) scale(1.05)';
+          } else {
+            centeredTransform = 'translateY(0) rotate(0) scale(1.05)';
+          }
+          centeredEl.style.transform = centeredTransform;
+        } else {
+          centeredEl.style.transform = 'scale(1)';
+        }
       }
-      
+
       const realIndex = (closestIndex - CLONE_COUNT + category.images.length) % category.images.length;
       setActiveIndex(realIndex);
     }
@@ -136,7 +153,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         container.style.scrollBehavior = 'smooth';
         setTimeout(() => {
           isJumpingRef.current = false;
-          if (!isMobile) handleScrollEffects();
+          handleScrollEffects();
         }, 50);
     }
     else if (container.scrollLeft > totalItemWidth * (category.images.length + CLONE_COUNT - 1.5)) {
@@ -147,10 +164,10 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         container.style.scrollBehavior = 'smooth';
         setTimeout(() => {
           isJumpingRef.current = false;
-          if (!isMobile) handleScrollEffects();
+          handleScrollEffects();
         }, 50);
     }
-  }, [IS_INFINITE, CLONE_COUNT, category.images.length, getItems, handleScrollEffects, isMobile]);
+  }, [IS_INFINITE, CLONE_COUNT, category.images.length, getItems, handleScrollEffects]);
 
   const snapToCenter = useCallback(() => {
     if (isJumpingRef.current || isMobile) return;
@@ -183,7 +200,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   }, [getItems, isMobile]);
 
   const onScroll = useCallback(() => {
-    if (isJumpingRef.current || isMobile || isNavigatingRef.current) return;
+    if (isJumpingRef.current || isNavigatingRef.current) return;
 
     // Cancelar el frame anterior si existe
     if (rafIdRef.current) {
@@ -202,11 +219,10 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
           // No usar snapToCenter automáticamente, causa conflictos con navegación
         }
     }, 150);
-  }, [handleScrollEffects, handleInfiniteJump, isMobile]);
+  }, [handleScrollEffects, handleInfiniteJump]);
   
-  // DESKTOP: Use JS-driven scroll effects
+  // Scroll effects para desktop y mobile
   useEffect(() => {
-    if (isMobile) return;
     const container = scrollContainerRef.current;
     container?.addEventListener('scroll', onScroll, { passive: true });
     return () => {
@@ -214,62 +230,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
-  }, [isMobile, onScroll]);
+  }, [onScroll]);
 
-  // MOBILE: Use IntersectionObserver for performance
-  useEffect(() => {
-    if (!isMobile) return;
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    const items = getItems();
-    if (items.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const intersectingEntries = entries.filter(e => e.isIntersecting);
-        if (intersectingEntries.length === 0) return;
-
-        let mostCenteredEntry = intersectingEntries[0];
-        let minDistance = Infinity;
-        const scrollCenter = scrollContainer.scrollLeft + scrollContainer.offsetWidth / 2;
-
-        intersectingEntries.forEach(entry => {
-            const el = entry.target as HTMLElement;
-            const imageCenter = el.offsetLeft + el.offsetWidth / 2;
-            const distance = Math.abs(scrollCenter - imageCenter);
-            if (distance < minDistance) {
-                minDistance = distance;
-                mostCenteredEntry = entry;
-            }
-        });
-
-        const el = mostCenteredEntry.target as HTMLElement;
-        const index = parseInt(el.dataset.index || '0', 10);
-        const realIndex = (index - CLONE_COUNT + category.images.length) % category.images.length;
-        setActiveIndex(realIndex);
-      },
-      { root: scrollContainer, threshold: 0.5 }
-    );
-    items.forEach(item => observer.observe(item));
-    return () => items.forEach(item => observer.unobserve(item));
-  }, [isMobile, getItems, CLONE_COUNT, category.images.length]);
-
-  // MOBILE: Lightweight scroll listener for infinite jump
-  useEffect(() => {
-      if (!isMobile) return;
-      const container = scrollContainerRef.current;
-      if (!container) return;
-      let scrollEndTimer: number;
-      const handleMobileScrollEnd = () => {
-          clearTimeout(scrollEndTimer);
-          scrollEndTimer = window.setTimeout(() => {
-              handleInfiniteJump();
-          }, 150);
-      };
-      container.addEventListener('scroll', handleMobileScrollEnd);
-      return () => container.removeEventListener('scroll', handleMobileScrollEnd);
-  }, [isMobile, handleInfiniteJump]);
 
   useLayoutEffect(() => {
     const container = scrollContainerRef.current;
@@ -287,12 +249,10 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       container.scrollLeft = newScrollLeft;
       container.style.scrollBehavior = '';
 
-      // Aplicar efectos inmediatamente
-      if (!isMobile) {
-        requestAnimationFrame(() => handleScrollEffects());
-      }
+      // Aplicar efectos inmediatamente tanto en móvil como en desktop
+      requestAnimationFrame(() => handleScrollEffects());
     }
-  }, [IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects, category.id, extendedImages.length, isMobile]);
+  }, [IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects, category.id, extendedImages.length]);
 
   useEffect(() => {
     let resizeTimer: number;
@@ -317,9 +277,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
           void container.offsetHeight;
 
           container.style.scrollBehavior = '';
-          if (!isMobile) {
-            requestAnimationFrame(() => handleScrollEffects());
-          }
+          requestAnimationFrame(() => handleScrollEffects());
         }
       }, 150);
     };
@@ -329,7 +287,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       window.removeEventListener('resize', handleResize);
       clearTimeout(resizeTimer);
     };
-  }, [activeIndex, IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects, isMobile]);
+  }, [activeIndex, IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects]);
 
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
@@ -353,43 +311,22 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     if(targetElement) {
         const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
 
-        if (!isMobile) {
-          // Desktop: scroll instantáneo + effects
-          isJumpingRef.current = true;
+        // Actualizar el activeIndex inmediatamente
+        setActiveIndex(index);
 
-          // Desactivar transitions durante navegación para que sea instantáneo
-          items.forEach(item => {
-            (item as HTMLElement).style.transition = 'none';
-          });
+        // Scroll suave para ambas plataformas
+        container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
 
-          container.style.scrollBehavior = 'auto';
-          container.scrollLeft = newScrollLeft;
-          void container.offsetHeight;
-
-          // Aplicar efectos inmediatamente
+        // Aplicar efectos inmediatamente
+        setTimeout(() => {
           handleScrollEffects();
-          setActiveIndex(index);
+        }, 50);
 
-          // Reactivar transitions después de un frame
-          requestAnimationFrame(() => {
-            items.forEach(item => {
-              (item as HTMLElement).style.transition = '';
-            });
-            container.style.scrollBehavior = '';
-
-            setTimeout(() => {
-              isNavigatingRef.current = false;
-              isJumpingRef.current = false;
-            }, 50);
-          });
-        } else {
-          // Mobile: scroll smooth normal
-          container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
-
-          setTimeout(() => {
-            isNavigatingRef.current = false;
-          }, 400);
-        }
+        // Marcar como completado después de la animación
+        setTimeout(() => {
+          isNavigatingRef.current = false;
+          handleScrollEffects();
+        }, 400);
     }
   };
 
@@ -451,11 +388,15 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
              ].filter(Boolean).join(' ');
 
             return (
-              <div 
-                key={`${image.id}-${index}`} 
+              <div
+                key={`${image.id}-${index}`}
                 data-index={index}
                 className={classNames}
-                style={{ scrollSnapAlign: 'center' }}
+                style={{
+                  scrollSnapAlign: 'center',
+                  transition: 'transform 0.3s ease-out, opacity 0.3s ease-out',
+                  willChange: 'transform, opacity'
+                }}
                 onClick={() => onImageClick(image, category.images)}
                 onKeyPress={(e) => e.key === 'Enter' && onImageClick(image, category.images)}
                 tabIndex={0}
