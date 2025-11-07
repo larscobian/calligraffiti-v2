@@ -1,6 +1,6 @@
 [
   {
-    "id": ".Murales Completos",
+    "id": "murales-completos",
     "title": "Murales Completos",
     "images": [
       {
@@ -108,7 +108,7 @@
     ]
   },
   {
-    "id": ".Murales Simples",
+    "id": "murales-simples",
     "title": "Murales Simples",
     "images": [
       {
@@ -204,7 +204,7 @@
     ]
   },
   {
-    "id": ".Cuadros y Relojes",
+    "id": "cuadros-y-relojes",
     "title": "Cuadros y Relojes",
     "images": [
       {
@@ -354,8 +354,8 @@
     ]
   },
   {
-    "id": ".Detalles - Puertas - Espejos",
-    "title": "Detalles - Puertas - Espejos",
+    "id": "detalles-puertas-espejos",
+    "title": "Detalles / Puertas / Espejos",
     "images": [
       {
         "id": "IMG_20251104_124752.jpg",
@@ -397,12 +397,6 @@
         "id": "IMG_20251104_131448.jpg",
         "src": "/images/detalles-puertas-espejos/IMG_20251104_131448.jpg",
         "alt": "IMG_20251104_131448.jpg",
-        "rotation": 0
-      },
-      {
-        "id": "IMG_20251104_131723.jpg",
-        "src": "/images/detalles-puertas-espejos/IMG_20251104_131723.jpg",
-        "alt": "IMG_20251104_131723.jpg",
         "rotation": 0
       },
       {

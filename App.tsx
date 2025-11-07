@@ -344,6 +344,8 @@ const App: React.FC = () => {
           onClose={handleCloseModal}
           onNext={handleNextImage}
           onPrev={handlePrevImage}
+          currentIndex={modalState.gallery.findIndex(img => img.id === modalState.image.id)}
+          totalImages={modalState.gallery.length}
         />
       )}
     </div>

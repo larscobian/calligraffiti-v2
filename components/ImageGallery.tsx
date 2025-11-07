@@ -17,6 +17,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   const galleryContainerRef = useRef<HTMLDivElement>(null);
   const isJumpingRef = useRef(false);
   const scrollTimeoutRef = useRef<number | null>(null);
+  const isNavigatingRef = useRef(false);
+  const rafIdRef = useRef<number | null>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -181,12 +183,24 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   }, [getItems, isMobile]);
 
   const onScroll = useCallback(() => {
-    if (isJumpingRef.current || isMobile) return;
-    handleScrollEffects();
+    if (isJumpingRef.current || isMobile || isNavigatingRef.current) return;
+
+    // Cancelar el frame anterior si existe
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
+
+    // Usar requestAnimationFrame para optimizar
+    rafIdRef.current = requestAnimationFrame(() => {
+      handleScrollEffects();
+    });
+
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     scrollTimeoutRef.current = window.setTimeout(() => {
-        handleInfiniteJump();
-        snapToCenter();
+        if (!isNavigatingRef.current) {
+          handleInfiniteJump();
+          snapToCenter();
+        }
     }, 200);
   }, [handleScrollEffects, handleInfiniteJump, snapToCenter, isMobile]);
   
@@ -198,6 +212,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     return () => {
       container?.removeEventListener('scroll', onScroll);
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
   }, [isMobile, onScroll]);
 
@@ -278,25 +293,40 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
   }, [IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects, category.id, extendedImages.length, isMobile]);
 
   useEffect(() => {
+    let resizeTimer: number;
+
     const handleResize = () => {
-      const container = scrollContainerRef.current;
-      const items = getItems();
-      if (!container || items.length === 0) return;
+      // Debounce del resize para evitar múltiples llamadas
+      clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        const container = scrollContainerRef.current;
+        const items = getItems();
+        if (!container || items.length === 0) return;
 
-      const targetDomIndex = IS_INFINITE ? activeIndex + CLONE_COUNT : activeIndex;
-      const targetElement = items[targetDomIndex] as HTMLElement;
+        const targetDomIndex = IS_INFINITE ? activeIndex + CLONE_COUNT : activeIndex;
+        const targetElement = items[targetDomIndex] as HTMLElement;
 
-      if (targetElement) {
-        const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
-        container.style.scrollBehavior = 'auto';
-        container.scrollTo({ left: newScrollLeft, behavior: 'auto' });
-        container.style.scrollBehavior = '';
-        if (!isMobile) handleScrollEffects();
-      }
+        if (targetElement) {
+          const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
+          container.style.scrollBehavior = 'auto';
+          container.scrollLeft = newScrollLeft;
+
+          // Forzar un reflow
+          void container.offsetHeight;
+
+          container.style.scrollBehavior = '';
+          if (!isMobile) {
+            requestAnimationFrame(() => handleScrollEffects());
+          }
+        }
+      }, 150);
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimer);
+    };
   }, [activeIndex, IS_INFINITE, CLONE_COUNT, getItems, handleScrollEffects, isMobile]);
 
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
@@ -308,12 +338,21 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     const container = scrollContainerRef.current;
     const items = getItems();
     if (!container || items.length === 0) return;
-    
+
+    // Marcar que estamos navegando manualmente
+    isNavigatingRef.current = true;
+
     const targetIndex = IS_INFINITE ? index + CLONE_COUNT : index;
     const targetElement = items[targetIndex] as HTMLElement;
     if(targetElement) {
         const newScrollLeft = targetElement.offsetLeft - (container.offsetWidth - targetElement.offsetWidth) / 2;
         container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+
+        // Resetear la flag después de la animación
+        setTimeout(() => {
+          isNavigatingRef.current = false;
+          if (!isMobile) handleScrollEffects();
+        }, 500);
     }
   };
 
@@ -369,7 +408,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
              const classNames = [
                  'gallery-image-item',
                  'relative flex-shrink-0 w-72 md:w-80 rounded-2xl overflow-hidden shadow-lg shadow-black/50 cursor-pointer group',
-                 'mr-[-108px] md:mr-[-120px]',
+                 'mr-[-80px] md:mr-[-90px]',
                  isMobile ? 'mobile-transform' : '',
                  isMobile && isActive ? 'is-active' : ''
              ].filter(Boolean).join(' ');
@@ -393,6 +432,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
                     className="w-full h-full object-cover"
                     style={{transform: `rotate(${image.rotation || 0}deg)`}}
                     loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="400"%3E%3Crect fill="%23333" width="300" height="400"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-family="sans-serif" font-size="14"%3EImagen no disponible%3C/text%3E%3C/svg%3E';
+                    }}
                   />
                 </div>
                 {isEditMode && (
