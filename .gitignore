@@ -22,18 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Portfolio images (reduce token consumption)
-public/images/**/*.jpg
-public/images/**/*.jpeg
-public/images/**/*.png
-public/images/**/*.gif
-public/images/**/*.webp
-
-# MCP and Claude Code configuration
-.claude/
-.mcp.json
-.playwright-mcp/
-
-# Large data files
-portfolio-data.json
