@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# MCP configuration (local only, Claude Code can still read them)
+.playwright-mcp/
