@@ -91,31 +91,34 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
       const zIndex = Math.round(150 - absDistance / 5);
       el.style.zIndex = String(zIndex);
 
-      // Aplicar transformaciones según dispositivo
+      // Aplicar transformaciones según dispositivo con transiciones fluidas
       if (deviceType === 'desktop') {
-        // Desktop: efectos 3D completos con semi-transparencia para superposición suave
-        const scale = Math.max(0.8, 1 - absDistance / (containerWidth * 1.2));
-        const opacity = Math.max(0.5, 1 - absDistance / (containerWidth * 0.8)); // Mayor opacidad para superposición
-        const rotationY = (distanceFromCenter / (containerWidth / 2)) * -20;
-        const translateX = distanceFromCenter / 3.5;
+        // Desktop: efectos 3D completos con transición de transparencia suave
+        const scale = Math.max(0.75, 1 - absDistance / (containerWidth * 1.0));
+        // Curva de opacidad más suave para mejor superposición
+        const opacity = Math.max(0.3, Math.min(1, 1 - (absDistance / (containerWidth * 0.6))));
+        const rotationY = (distanceFromCenter / (containerWidth / 2)) * -18;
+        const translateX = distanceFromCenter / 4;
         const transform = `translateX(${translateX}px) rotateY(${rotationY}deg) scale(${scale})`;
 
         el.style.transform = transform;
         el.style.opacity = `${opacity}`;
       } else if (deviceType === 'tablet') {
-        // Tablet: efectos intermedios sin rotación 3D pero con escala y semi-transparencia
-        const scale = Math.max(0.85, 1 - absDistance / (containerWidth * 1.5));
-        const opacity = Math.max(0.6, 1 - absDistance / (containerWidth * 0.9)); // Semi-transparencia
-        const rotationZ = (distanceFromCenter / containerWidth) * 3;
-        const translateY = absDistance / 20;
+        // Tablet: efectos intermedios con transición suave
+        const scale = Math.max(0.8, 1 - absDistance / (containerWidth * 1.3));
+        // Curva de opacidad más gradual
+        const opacity = Math.max(0.4, Math.min(1, 1 - (absDistance / (containerWidth * 0.7))));
+        const rotationZ = (distanceFromCenter / containerWidth) * 2.5;
+        const translateY = absDistance / 25;
         const transform = `translateY(${translateY}px) rotate(${rotationZ}deg) scale(${scale})`;
 
         el.style.transform = transform;
         el.style.opacity = `${opacity}`;
       } else {
-        // Móvil: efectos sutiles con semi-transparencia
-        const scale = absDistance < containerWidth / 3 ? 1 : 0.95;
-        const opacity = absDistance < containerWidth / 2 ? 1 : 0.75; // Más opacidad para superposición
+        // Móvil: efectos sutiles con transición gradual de opacidad
+        const scale = Math.max(0.9, 1 - absDistance / (containerWidth * 2));
+        // Transición más suave en móvil
+        const opacity = Math.max(0.5, Math.min(1, 1 - (absDistance / (containerWidth * 0.8))));
         el.style.transform = `scale(${scale})`;
         el.style.opacity = `${opacity}`;
       }
@@ -152,25 +155,33 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
     if (!container || items.length < 2) return;
 
     const itemWidth = (items[0] as HTMLElement).offsetWidth;
-    const itemMargin = -parseInt(window.getComputedStyle(items[0]).marginRight);
-    const totalItemWidth = itemWidth - itemMargin;
+    const itemMargin = Math.abs(parseInt(window.getComputedStyle(items[0]).marginRight) || 0);
+    const totalItemWidth = itemWidth + itemMargin;
 
-    if (container.scrollLeft < totalItemWidth * (CLONE_COUNT - 0.5)) {
+    // Umbrales más precisos para evitar saltos prematuros
+    const leftThreshold = totalItemWidth * (CLONE_COUNT - 0.3);
+    const rightThreshold = totalItemWidth * (category.images.length + CLONE_COUNT - 0.7);
+
+    // Saltar cuando nos acercamos al borde izquierdo (clones iniciales)
+    if (container.scrollLeft < leftThreshold) {
         isJumpingRef.current = true;
         container.style.scrollBehavior = 'auto';
-        container.scrollLeft += category.images.length * totalItemWidth;
-        container.getBoundingClientRect(); // Force style recalculation
+        const jumpDistance = category.images.length * totalItemWidth;
+        container.scrollLeft += jumpDistance;
+        void container.offsetHeight; // Force reflow
         container.style.scrollBehavior = 'smooth';
         setTimeout(() => {
           isJumpingRef.current = false;
           handleScrollEffects();
         }, 50);
     }
-    else if (container.scrollLeft > totalItemWidth * (category.images.length + CLONE_COUNT - 1.5)) {
+    // Saltar cuando nos acercamos al borde derecho (clones finales)
+    else if (container.scrollLeft > rightThreshold) {
         isJumpingRef.current = true;
         container.style.scrollBehavior = 'auto';
-        container.scrollLeft -= category.images.length * totalItemWidth;
-        container.getBoundingClientRect(); // Force style recalculation
+        const jumpDistance = category.images.length * totalItemWidth;
+        container.scrollLeft -= jumpDistance;
+        void container.offsetHeight; // Force reflow
         container.style.scrollBehavior = 'smooth';
         setTimeout(() => {
           isJumpingRef.current = false;
@@ -404,8 +415,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
                 className={classNames}
                 style={{
                   scrollSnapAlign: 'center',
-                  transition: 'transform 0.3s ease-out, opacity 0.3s ease-out',
-                  willChange: 'transform, opacity'
+                  transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), z-index 0s',
+                  willChange: 'transform, opacity, z-index'
                 }}
                 onClick={() => onImageClick(image, category.images)}
                 onKeyPress={(e) => e.key === 'Enter' && onImageClick(image, category.images)}
@@ -449,17 +460,19 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ category, onAddImages, onIm
         </div>
         {IS_INFINITE && (
           <>
-            {/* Botones de navegación - Siempre visibles en todos los dispositivos */}
+            {/* Botones de navegación - Siempre visibles con z-index alto */}
             <button
               onClick={handlePrevClick}
-              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[102] p-2 sm:p-3 text-white bg-black bg-opacity-30 rounded-full hover:bg-opacity-60 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 opacity-80 hover:opacity-100 backdrop-blur-sm"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 text-white bg-black/40 rounded-full hover:bg-black/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 shadow-lg backdrop-blur-sm"
+              style={{ zIndex: 250 }}
               aria-label="Imagen anterior"
             >
               <ChevronLeftIcon />
             </button>
             <button
               onClick={handleNextClick}
-              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[102] p-2 sm:p-3 text-white bg-black bg-opacity-30 rounded-full hover:bg-opacity-60 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 opacity-80 hover:opacity-100 backdrop-blur-sm"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 text-white bg-black/40 rounded-full hover:bg-black/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 shadow-lg backdrop-blur-sm"
+              style={{ zIndex: 250 }}
               aria-label="Siguiente imagen"
             >
               <ChevronRightIcon />

@@ -21,6 +21,21 @@ Calligraffiti v2 is a React 19 + TypeScript portfolio catalog application built 
 **Communication:**
 - All responses and documentation must be in Spanish when working on this project
 
+**Testing Requirements:**
+- **CRITICAL**: ALL changes must be tested on desktop, tablet, AND mobile devices before considering them complete
+- Changes that work on one device often fail on others due to different rendering engines and CSS support
+- Always verify:
+  - Desktop (>1024px): Full 3D effects, perspective transforms, smooth animations
+  - Tablet (768px-1024px): Intermediate effects without heavy 3D transforms
+  - Mobile (<768px): Simplified effects optimized for performance
+- **Code Review Approach**:
+  - Review code changes to ensure they include responsive breakpoints and device-specific logic
+  - Check for proper use of `deviceType` state and conditional rendering/styling
+  - Verify CSS media queries and conditional transforms are present
+  - **Only use Playwright MCP for testing when explicitly requested or truly necessary** (consumes significant context)
+  - Manual testing with browser developer tools is preferred for most changes
+- Common issues: transforms working on desktop but not mobile, touch events vs click events, viewport-specific CSS
+
 ## Development Commands
 
 ```bash
